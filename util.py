@@ -24,7 +24,7 @@ def prompts_form(prompts, form, num_prompts):
             tups = prompt.split(';')
             parsed_prompt = []
             for tup in tups:
-                parsed_prompt.append(make_tuple(tup))
+                parsed_prompt.append(make_tuple(tup.strip()))
             prompt = parsed_prompt
 
     return prompts
