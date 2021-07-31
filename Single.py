@@ -36,7 +36,7 @@ class Single:
         if not os.path.exists(gallery):
             os.makedirs(gallery)
         if not os.path.exists(self.image_prompts_folder):
-            os.makedirs(selfimage_prompts_folder)
+            os.makedirs(self.image_prompts_folder)
         if not os.path.exists(self.info_folder):
             os.makedirs(self.info_folder)
         
