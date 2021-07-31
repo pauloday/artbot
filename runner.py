@@ -278,8 +278,8 @@ def run_prompt(args, st, dev=0, image_name=None,):
         losses_str = ', '.join(f'{loss.item():g}' for loss in losses)
         print(f'i: {i}, loss: {sum(losses).item():g}, losses: {losses_str}')
         out = synth(z)
-        st.image(file)
         TF.to_pil_image(out[0].cpu()).save(file)
+        st.image(file)
         print(f'Wrote {file}')
         
     def ascend_txt():
