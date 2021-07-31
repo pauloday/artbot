@@ -153,7 +153,7 @@ class BraidBatch(Batch):
         Batch.__init__(self, self.prompts, image_prompts, args)
 
     def image_name(self, prompt, i):
-        return windows_path_sanitize(f'{self.args.gallery}/{self.image_name_counter}-{prompt}-{i}.png')
+        return windows_path_sanitize(f'{self.args.gallery}/{self.image_name_counter}-{prompt}-{i}.jpg')
     
     def run(self):
         for cycle in range(self.cycles):
