@@ -1,6 +1,6 @@
 import torch
 import argparse
-
+from ast import literal_eval as make_tuple
 
 def windows_path_sanitize(string):
     return ''.join(i for i in string if i not in ':*?<>|')
@@ -13,13 +13,20 @@ def init_state_field(state, field, default):
         state[field] = default
 
 def prompts_form(prompts, form, num_prompts):
-    form.write('Use tuples to split iteration time between prompts')
-    form.write('E.G (river, 1), (lava, 1) will do half iterations on river and half on lava')
-    form.write('You can also do multiple prompts, concurrently')
+    form.write('Use tuples to split iteration time between prompts, the second value is the ratio of time to spend on that prompt.')
+    form.write('E.G (\'river\', 1), (\'lava\', 1) will do half iterations on river and half on lava. You have to use quotes around the prompts in the ratio sets.')
+    form.write('You can also do multiple prompts, concurrently. Individual prompts don\'t need quotes.')
     for i in range(int(num_prompts)):
         if i >= len(prompts):
             prompts.append(None)
-        prompts[i] = form.text_input(f'Prompt #{i}', value=prompts[i])
+        prompt = form.text_input(f'Prompt #{i}', value=prompts[i])
+        if prompt[0] == '(':
+            tups = prompt.split(',')
+            parsed_prompt = []
+            for tup in tups:
+                parsed_prompt.append(make_tuple(tup))
+            prompt = parsed_prompt
+
     return prompts
 
 def state_to_args(state):

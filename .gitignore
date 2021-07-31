@@ -1,0 +1,11 @@
+.ipynb_checkpoints/*
+CLIP/
+Gaillery/*
+__pycache__/
+__pycache__/
+taming-transformers/
+taming/
+vqgan_imagenet_f16_1024.ckpt
+vqgan_imagenet_f16_1024.yaml
+vqgan_imagenet_f16_16384.ckpt
+vqgan_imagenet_f16_16384.yaml
