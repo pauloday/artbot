@@ -26,7 +26,7 @@ def prompts_form(prompts, form, num_prompts):
             for tup in tups:
                 parsed_prompt.append(make_tuple(tup.strip()))
             prompt = parsed_prompt
-
+        prompts[i] = prompt
     return prompts
 
 def state_to_args(state):

@@ -59,8 +59,7 @@ if not state['running']:
     num_prompts = st.number_input('Number of prompts', min_value=1)
     args['prompts'] = util.prompts_form(args['prompts'], st, num_prompts)
 else:  # we are running
-    run_tag = 'Stop'
-    st.write('See the colab tab or terminal output for more info')
+    st.write('Loading...')
 # write info and do run
 if args:
     side.write('Loaded arguments:')
@@ -71,4 +70,4 @@ if state['running']:
     batch.write_info()
     batch.run(st)
     st.session_state['running'] = False
-    st.write('Select a batch type to reset run')
+    st.write('Update settings to reset and run again.')

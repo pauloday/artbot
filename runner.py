@@ -22,7 +22,6 @@ import shutil
 import threading
 import itertools
 import time
-import pprint
 
 def sinc(x):
     return torch.where(x != 0, torch.sin(math.pi * x) / (math.pi * x), x.new_ones([]))
@@ -280,7 +279,7 @@ def run_prompt(args, st, dev=0, image_name=None,):
         out = synth(z)
         TF.to_pil_image(out[0].cpu()).save(file)
         st.image(file)
-        print(f'Wrote {file}')
+        st.write(f'Wrote {file}')
         
     def ascend_txt():
         out = synth(z)
@@ -311,7 +310,7 @@ def run_prompt(args, st, dev=0, image_name=None,):
     i = 0
     bar = st.progress(0)
     try:
-        print(f'generating {args["prompts"]}')
+        st.write(f'generating {args["prompts"]}')
         while i <= args['iterations']:
             train(i)
             set_prompts(i)
