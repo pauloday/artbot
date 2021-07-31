@@ -70,3 +70,5 @@ if batch_type == 'Single':
 if state['running']:
     batch.write_info()
     batch.run(st)
+    st.session_state['running'] = False
+    st.write('Select a batch type to reset run')

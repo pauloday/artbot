@@ -319,5 +319,3 @@ def run_prompt(args, st, dev=0, image_name=None,):
             i += 1
     except KeyboardInterrupt:
         pass
-    st.session_state['running'] = False
-    st.write('Select a batch type to reset run')
