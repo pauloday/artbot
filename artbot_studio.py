@@ -47,15 +47,14 @@ batch_type = st.selectbox(
     'Batch type',
     ('Single', 'more coming soon')
 )
+# set up a batch
+args['iterations'] = side.number_input('Iterations', min_value=1, value=int(args['iterations']))
+args['images_per_prompt'] = side.number_input('Images per prompt', min_value=1, value=int(args['images_per_prompt']))
 
+args['size'][0] = side.number_input('Width', min_value=0, value=int(args['size'][0]))
+args['size'][1] = side.number_input('Height', min_value=0, value=int(args['size'][1]))
+    
 if not state['running']:
-    # set up a batch
-    args['iterations'] = side.number_input('Iterations', min_value=1, value=int(args['iterations']))
-    args['images_per_prompt'] = side.number_input('Images per prompt', min_value=1, value=int(args['images_per_prompt']))
-
-    args['size'][0] = side.number_input('Width', min_value=0, value=int(args['size'][0]))
-    args['size'][1] = side.number_input('Height', min_value=0, value=int(args['size'][1]))
-        
     batch = None
     num_prompts = st.number_input('Number of prompts', min_value=1)
     args['prompts'] = util.prompts_form(args['prompts'], st, num_prompts)
@@ -68,9 +67,6 @@ if args:
     side.write(args)
 if batch_type == 'Single':
     batch = Single.Single(args)
-if args:
-    side.write('Loaded arguments:')
-    side.write(args)
 if state['running']:
     batch.write_info()
     batch.run(st)

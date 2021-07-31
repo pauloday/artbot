@@ -18,9 +18,9 @@ def prompts_form(prompts, form, num_prompts):
     form.write('You can also do multiple prompts, concurrently. Individual prompts don\'t need quotes.')
     for i in range(int(num_prompts)):
         if i >= len(prompts):
-            prompts.append(None)
+            prompts.append('')
         prompt = form.text_input(f'Prompt #{i}', value=prompts[i])
-        if prompt[0] == '(':
+        if len(prompt) > 0 and prompt[0] == '(':
             tups = prompt.split(',')
             parsed_prompt = []
             for tup in tups:
