@@ -276,7 +276,7 @@ def run_prompt(args, st, dev=0, image_name=None,):
         if image_name:
             file = image_name(args['prompts'], i)
         losses_str = ', '.join(f'{loss.item():g}' for loss in losses)
-        tqdm.write(f'i: {i}, loss: {sum(losses).item():g}, losses: {losses_str}')
+        print(f'i: {i}, loss: {sum(losses).item():g}, losses: {losses_str}')
         out = synth(z)
         TF.to_pil_image(out[0].cpu()).save(file)
         print(f'Wrote {file}')
