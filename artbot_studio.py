@@ -4,13 +4,17 @@ import streamlit as st
 import util
 import pprint
 import Single
-def st_print(*args):
-    strs = map(pprint.pformat, args)
-    st.info(' '.join(strs))
+# this will pipe most output to streamlit, but not some progress bars
+# I think I can reroute those but it might clobber the streamlit output
+# pretty sure each progress bar update will be its own line
+# so I'm leaning towards just having the colab page be the runner log
+# def st_print(*args):
+#     strs = map(pprint.pformat, args)
+#     st.info(' '.join(strs))
 
-if 'oldprint' not in __builtins__:
-    __builtins__['oldprint'] = __builtins__['print']
-__builtins__['print'] = st_print
+# if 'oldprint' not in __builtins__:
+#     __builtins__['oldprint'] = __builtins__['print']
+# __builtins__['print'] = st_print
 
 st.write(f'Device count: {util.dev_count()}')
 side = st.sidebar
