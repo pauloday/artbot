@@ -45,7 +45,7 @@ args = state.args
 
 batch_type = st.selectbox(
     'Batch type',
-    ('Single')
+    ('Single', 'more coming soon')
 )
 
 if not state['running']:
