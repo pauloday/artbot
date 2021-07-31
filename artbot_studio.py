@@ -1,20 +1,17 @@
-import sys, inspect
+import sys, inspect, os, cv2
 sys.path.append('./taming-transformers')
 import streamlit as st
 import util
 import pprint
 import Single
-# this will pipe most output to streamlit, but not some progress bars
-# I think I can reroute those but it might clobber the streamlit output
-# pretty sure each progress bar update will be its own line
-# so I'm leaning towards just having the colab page be the runner log
-# def st_print(*args):
-#     strs = map(pprint.pformat, args)
-#     st.info(' '.join(strs))
+# this will pipe most output from colab to streamlit
+def st_print(*args):
+    strs = map(pprint.pformat, args)
+    st.info(' '.join(strs))
 
-# if 'oldprint' not in __builtins__:
-#     __builtins__['oldprint'] = __builtins__['print']
-# __builtins__['print'] = st_print
+if 'oldprint' not in __builtins__:
+    __builtins__['oldprint'] = __builtins__['print']
+__builtins__['print'] = st_print
 state = st.session_state
 # st.write(f'Device count: {util.dev_count()}')
 side = st.sidebar
@@ -25,8 +22,8 @@ state['running'] = st.button('Run')
 util.init_state_field(state, 'args', {
     'prompts': [],
     'image_prompts': None,
-    'iterations': 1,
-    'images_per_prompt': 1,
+    'iterations': 100,
+    'images_per_prompt': 30,
     'noise_prompt_seeds': [],
     'noise_prompt_weights': [],
     'size': [1000, 500],
@@ -58,8 +55,6 @@ if not state['running']:
     batch = None
     num_prompts = st.number_input('Number of prompts', min_value=1)
     args['prompts'] = util.prompts_form(args['prompts'], st, num_prompts)
-else:  # we are running
-    st.write('Loading...')
 # write info and do run
 if args:
     side.write('Loaded arguments:')
@@ -67,23 +62,34 @@ if args:
 if batch_type == 'Single':
     batch = Single.Single(args)
 if state['running']:
+    top_status = st.empty()
+    progress_bar = st.empty()
+    bar = progress_bar.progress(0)
+    image_box = st.empty()
+    bottom_status = st.empty()
+    
+    top_status.write(f'Generating {args["prompts"]}...')
     batch.write_info()
-    batch.run(st)
+    image_box = batch.run(bar, image_box, bottom_status)
     st.session_state['running'] = False
 
-    image_folder = args.gallery
+    top_status.write('Generating video...')
+    image_folder = args['gallery']
     video_name = batch.title
 
     images = [img for img in os.listdir(image_folder) if img.endswith(".jpg")]
     frame = cv2.imread(os.path.join(image_folder, images[0]))
     height, width, layers = frame.shape
 
-    video = cv2.VideoWriter(video_name, 0, 30, (width,height))
+    video = cv2.VideoWriter(str(video_name), 0, 30, (width,height))
 
+    prog = 0
     for image in images:
+        bar.progress(prog/len(images))
         video.write(cv2.imread(os.path.join(image_folder, image)))
+        prog += 1
 
     cv2.destroyAllWindows()
     video.release()
-    st.write(video)
-    st.write('Update settings to reset and run again.')
+    image_box.write(video)
+    top_status.write(f'Run complete, output saved to {args["gallery"]}.')

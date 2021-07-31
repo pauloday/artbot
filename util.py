@@ -1,6 +1,7 @@
 import torch
+import os
 import argparse
-from ast import literal_eval as make_tuple
+from ast import literal_eval
 
 def windows_path_sanitize(string):
     return ''.join(i for i in string if i not in ':*?<>|')
@@ -19,12 +20,20 @@ def prompts_form(prompts, form, num_prompts):
     for i in range(int(num_prompts)):
         if i >= len(prompts):
             prompts.append('')
-        prompt = form.text_input(f'Prompt #{i}', value=prompts[i])
+        prompt = form.text_input(f'Prompt #{i}', value=prompts[i]).strip()
+        # this was loaded from state and is a ratio set, parse to the semicolon list
+        if len(prompts[i]) > 0 and prompts[i][0] == '[':
+            prompt = ''
+            parsed = literal_eval(prompts[i])
+            for tup in parsed:
+                print(prompt + f'{tup}; ')
+                prompt = prompt + (f'{tup}; ')
+            prompts[i] = prompt
         if len(prompt) > 0 and prompt[0] == '(':
             tups = prompt.split(';')
             parsed_prompt = []
             for tup in tups:
-                parsed_prompt.append(make_tuple(tup.strip()))
+                parsed_prompt.append(literal_eval(tup.strip()))
             prompt = parsed_prompt
         prompts[i] = prompt
     return prompts

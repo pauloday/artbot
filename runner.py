@@ -204,7 +204,7 @@ def get_current_prompt(schedule, i_pct):
 # each prompt can be an array of tuples with ('prompt', ratio)
 # ratio is the time spent on the prompt relative to the others in the array
 # so [('space', 1), ('ocean', 1)] will do space for 50% iterations, then ocean
-def run_prompt(args, st, dev=0, image_name=None,):
+def run_prompt(args, bar, image_box, status_box, dev=0, image_name=None,):
     device_name = f'cuda:{dev}'
     device = torch.device(device_name)
     print('Using device:', device, args['vqgan_checkpoint'])
@@ -275,11 +275,12 @@ def run_prompt(args, st, dev=0, image_name=None,):
         if image_name:
             file = image_name(args['prompts'], i)
         losses_str = ', '.join(f'{loss.item():g}' for loss in losses)
-        print(f'i: {i}, loss: {sum(losses).item():g}, losses: {losses_str}')
+        # this is some math thing I don't want to get rid of, but it takes a lot of space
+        #print(f'i: {i}, loss: {sum(losses).item():g}, losses: {losses_str}')
         out = synth(z)
         TF.to_pil_image(out[0].cpu()).save(file)
-        st.image(file)
-        st.write(f'Wrote {file}')
+        image_box.image(file)
+        status_box.write(f'Wrote {file}')
         
     def ascend_txt():
         out = synth(z)
@@ -308,9 +309,7 @@ def run_prompt(args, st, dev=0, image_name=None,):
             z.copy_(z.maximum(z_min).minimum(z_max))
 
     i = 0
-    bar = st.progress(0)
     try:
-        st.write(f'generating {args["prompts"]}')
         while i <= args['iterations']:
             train(i)
             set_prompts(i)
