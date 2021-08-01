@@ -59,11 +59,12 @@ if not state['running']:
     # streamlit magic command, this will be parsed as markdown
     '''
     # Artbot Studio
-    Double semicolon seperated pairs to switch the prompt midway through a run. The second value is the ratio of time to spend on that prompt.
-    E.G `river, 1;;lava, 1` will do half iterations on river and half on lava.
+    Welcome to Artbot! Enter a prompt to get started. The image size is tuned for Colab, but the other settings can be changes as you wish.
+    '--' seperated pairs to switch the prompt midway through a run. The second value is the ratio of time to spend on that prompt.
+    E.G `river, 1--lava, 1` will do half iterations on river and half on lava.
 
     You can also run prompts concurrently with '##'. This can be combined with the switching prompts to make complex prompts:
-    `river, 1;;lava, 1##ocean waves`
+    `river, 1--lava, 1##ocean waves`
     
     If you do too many images per prompt the previews may stop displaying. The images and video should stll be saved though, you can see them in file browser in the terminal/Colab tab.
     
@@ -76,8 +77,9 @@ if not state['running']:
     - `Industrial`
     - `Simple`
     - `Flow`
-    - `fire lava, 1;;mountain water, 1;;ocean waves', 1`
-    - `sunrise sunset horizon, 1;;ocean, 2;;forest, 3`
+    - `fire lava, 1--mountain water, 1--ocean waves', 1`
+    - `sunrise sunset horizon, 1--ocean, 2--forest, 3`
+    - `river, 1--lava, 1##ocean waves##dynamic, 1--harmony, 1--multiple, 1`
 
     You can also add artist styles using `by` or `in the style of`, for example `Dynamic by Van Gogh`.
     Here's some good ones:

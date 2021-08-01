@@ -27,8 +27,8 @@ def prompts_form(form):
         else:
             prompts.append(instr)
         def parse(prompt):
-            if ';;' in prompt:
-                tups = prompt.split(';;')
+            if '--' in prompt:
+                tups = prompt.split('--')
                 parsed_prompt = []
                 for tup_str in tups:
                     groups = re.search(r'(.*),(.*)', tup_str).groups()
