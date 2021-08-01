@@ -77,9 +77,10 @@ if not state['running']:
     - `Industrial`
     - `Simple`
     - `Flow`
+    - `Outer space`
     - `fire lava, 1--mountain water, 1--ocean waves', 1`
     - `sunrise sunset horizon, 1--ocean, 2--forest, 3`
-    - `river, 1--lava, 1##ocean waves##dynamic, 1--harmony, 1--multiple, 1`
+    - `mountains ArtstationHQ, 1--outer space, 1##dynamic, 1--multiple, 1--forest landscape by Van Gogh, 1##ocean waves`
 
     You can also add artist styles using `by` or `in the style of`, for example `Dynamic by Van Gogh`.
     Here's some good ones:
@@ -93,7 +94,7 @@ if not state['running']:
     - `Odilon Redon`
 
     I call these render strings. The model was trained with images from online art boards like Artstation, so these strings will make it more realistic/artsy.
-    I just put them on the end, or use a | to seperate them. For example `Dynamic by Van Gogh trending on Artstation | vray`
+    I just put them on the end. For example `Dynamic by Van Gogh trending on Artstation vray`
     - `Artstation`
     - `Trending on Artstation`
     - `ArtstationHQ`
@@ -120,7 +121,7 @@ if state['running'] and args:
         st.write(' '.join(strs))
     if 'oldprint' not in __builtins__:
         __builtins__['oldprint'] = __builtins__['print']
-        __builtins__['print'] = st_print
+    __builtins__['print'] = st_print
     video_box = st.empty()
     top_status = st.empty()
     top_status.write(f'Generating {args["prompts"]}...')
