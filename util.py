@@ -19,7 +19,7 @@ def prompts_form(num_prompts, form):
     for i in range(num_prompts):
         if len(prompts) >= i:
             prompts.append('')
-        prompt = form.text_input(f'Prompt #{i + 1}', value=prompts[i])
+        prompt = form.text_area(f'Prompt #{i + 1}', value=prompts[i])
         # this was loaded from state and is a ratio set, parse to the semicolon list
         if len(prompt) > 0 and prompt[0] == '[':
             prompt = ''
