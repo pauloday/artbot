@@ -20,8 +20,8 @@ state['running'] = st.sidebar.button('Run')
 util.init_state_field('args', state, {
     'prompts': [''],
     'image_prompts': None,
-    'iterations': 500,
-    'images_per_prompt': 150,
+    'iterations': 300,
+    'images_per_prompt': 80,
     'noise_prompt_seeds': [],
     'noise_prompt_weights': [],
     'size': [1000, 500],
@@ -143,7 +143,7 @@ if state['running'] and args:
 
     # ffpb uses some fancy print stuff, so put old print back
     __builtins__['print'] = __builtins__['oldprint']
-    argv = ['-r', '30', '-f', 'image2', '-i', f'{tmp_dir}/%04d.jpg', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', video_name]
+    argv = ['-r', '20', '-f', 'image2', '-i', f'{tmp_dir}/%04d.jpg', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', video_name]
     ffpb.main(argv, tqdm=stqdm)
     shutil.rmtree(tmp_dir)
 
