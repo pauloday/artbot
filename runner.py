@@ -22,6 +22,8 @@ import shutil
 import threading
 import itertools
 import time
+from stqdm import stqdm
+
 
 def sinc(x):
     return torch.where(x != 0, torch.sin(math.pi * x) / (math.pi * x), x.new_ones([]))
@@ -204,7 +206,9 @@ def get_current_prompt(schedule, i_pct):
 # each prompt can be an array of tuples with ('prompt', ratio)
 # ratio is the time spent on the prompt relative to the others in the array
 # so [('space', 1), ('ocean', 1)] will do space for 50% iterations, then ocean
-def run_prompt(args, bar, image_box, status_box, dev=0, image_name=None,):
+def run_prompt(args, update_box, add_frame, dev=0, image_name=None,):
+    image_box = update_box.empty()
+    bottom_status = update_box.empty()
     device_name = f'cuda:{dev}'
     device = torch.device(device_name)
     print('Using device:', device, args['vqgan_checkpoint'])
@@ -280,7 +284,8 @@ def run_prompt(args, bar, image_box, status_box, dev=0, image_name=None,):
         out = synth(z)
         TF.to_pil_image(out[0].cpu()).save(file)
         image_box.image(file)
-        status_box.write(f'Wrote {file}')
+        add_frame(file)
+        bottom_status.write(f'Wrote {file}')
         
     def ascend_txt():
         out = synth(z)
@@ -310,10 +315,11 @@ def run_prompt(args, bar, image_box, status_box, dev=0, image_name=None,):
 
     i = 0
     try:
-        while i <= args['iterations']:
-            train(i)
-            set_prompts(i)
-            bar.progress(i/args['iterations'])
-            i += 1
+        with stqdm(total=args['iterations'] + 1, st_container=update_box) as pbar:
+            while i <= args['iterations']:
+                train(i)
+                set_prompts(i)
+                i += 1
+                pbar.update()
     except KeyboardInterrupt:
         pass

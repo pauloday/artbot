@@ -5,7 +5,6 @@ import math
 import time
 import runner
 
-
 # Get the next prompt in a multithread safe way (avoids a race condition)
 # get_next returns either the next prompt or False if there are none left
 class PromptGetter():
@@ -28,7 +27,7 @@ class Single:
         self.image_prompts = args['image_prompts']
         self.args = args
         # set up the gallery folders
-        gallery = util.windows_path_sanitize(f'Gaillery/{title}')
+        gallery = util.windows_path_sanitize(f'/content/Gaillery/{title}')
         self.args['gallery'] = gallery
         self.image_prompts_folder = f'{gallery}/image_prompts'
         self.info_folder = f'{gallery}/info'
@@ -49,11 +48,12 @@ class Single:
         file.close()
         print(f'Wrote {file.name}')
 
-    def run(self, st, dev=0, image_name=None):
+    def run(self, update_box, add_to_video, dev=0, image_name=None):
         #if runner is passed a string it will do each letter as an individaul prompt
         runner.run_prompt(
             self.args,
-            st,
+            update_box,
+            add_to_video,
             dev,
             image_name
         )

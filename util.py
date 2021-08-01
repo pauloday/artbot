@@ -9,26 +9,27 @@ def windows_path_sanitize(string):
 def dev_count():
     return torch.cuda.device_count()
 
-def init_state_field(state, field, default):
+def init_state_field(field, state, default):
     if field not in state:
         state[field] = default
 
-def prompts_form(prompts, form, num_prompts):
+# just display existing prompts
+def prompts_form(num_prompts, form):
     form.write('Use semicolon separated tuples to split iteration time between prompts, the second value is the ratio of time to spend on that prompt.')
     form.write('E.G (\'river\', 1); (\'lava\', 1) will do half iterations on river and half on lava. You have to use quotes around the prompts in the ratio sets.')
     form.write('You can also do multiple prompts, concurrently. Individual prompts don\'t need quotes.')
-    for i in range(int(num_prompts)):
-        if i >= len(prompts):
+    prompts = []
+    for i in range(num_prompts):
+        if len(prompts) >= i:
             prompts.append('')
-        prompt = form.text_input(f'Prompt #{i}', value=prompts[i]).strip()
+        prompt = form.text_input(f'Prompt #{i + 1}', value=prompts[i])
         # this was loaded from state and is a ratio set, parse to the semicolon list
-        if len(prompts[i]) > 0 and prompts[i][0] == '[':
+        if len(prompt) > 0 and prompt[0] == '[':
             prompt = ''
             parsed = literal_eval(prompts[i])
             for tup in parsed:
                 print(prompt + f'{tup}; ')
                 prompt = prompt + (f'{tup}; ')
-            prompts[i] = prompt
         if len(prompt) > 0 and prompt[0] == '(':
             tups = prompt.split(';')
             parsed_prompt = []
