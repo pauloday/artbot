@@ -27,7 +27,7 @@ class Single:
         self.image_prompts = args['image_prompts']
         self.args = args
         # set up the gallery folders
-        gallery = util.windows_path_sanitize(f'/content/Gaillery/{title}')
+        gallery = f'/content/Gaillery/{title}'
         self.args['gallery'] = gallery
         self.image_prompts_folder = f'{gallery}/image_prompts'
         self.info_folder = f'{gallery}/info'
