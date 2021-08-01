@@ -39,17 +39,26 @@ util.init_state_field('args', state, {
 
 args = state.args
 
-batch_type = st.sidebar.selectbox(
-    'Batch type',
-    ('Single', 'more coming soon')
-)
+batch_type = 'Single'
+#= st.sidebar.selectbox(
+#     'Batch type',
+#     ('Single', 'more coming soon')
+# )
 # set up a batch
-args['iterations'] = side.number_input('Iterations', min_value=1, value=int(args['iterations']))
-args['images_per_prompt'] = side.number_input('Images per prompt', min_value=1, value=int(args['images_per_prompt']))
+form = st.sidebar.form(key='side_form')
+args['iterations'] = form.number_input('Iterations', min_value=1, value=int(args['iterations']))
+args['images_per_prompt'] = form.number_input('Images per prompt', min_value=1, value=int(args['images_per_prompt']))
 
-args['size'][0] = side.number_input('Width', min_value=0, value=int(args['size'][0]))
-args['size'][1] = side.number_input('Height', min_value=0, value=int(args['size'][1]))
+args['size'][0] = form.number_input('Width', min_value=0, value=int(args['size'][0]))
+args['size'][1] = form.number_input('Height', min_value=0, value=int(args['size'][1]))
+num_prompts = form.number_input('Number of prompts', min_value=1, value=1)
+args['prompts'] = util.prompts_form(num_prompts, form)
+form.form_submit_button('Update (stops run)')
 
+if not state['running']:
+    st.write('Use semicolon separated tuples to split iteration time between prompts, the second value is the ratio of time to spend on that prompt.')
+    st.write('E.G (\'river\', 1); (\'lava\', 1) will do half iterations on river and half on lava. You have to use quotes around the prompts in the ratio sets.')
+    st.write('You can also do multiple prompts, concurrently. Individual prompts don\'t need quotes.')
 if state['running'] and args:
 # write info and do run
     clean_args = args.copy()
@@ -106,7 +115,3 @@ if state['running'] and args:
 if args:
     side.write('Loaded arguments:')
     side.write(args)
-# draw prompts form
-if not state['running']:
-    num_prompts = st.number_input('Number of prompts', min_value=1, value=1)
-    args['prompts'] = util.prompts_form(num_prompts, st)

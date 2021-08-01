@@ -15,9 +15,6 @@ def init_state_field(field, state, default):
 
 # just display existing prompts
 def prompts_form(num_prompts, form):
-    form.write('Use semicolon separated tuples to split iteration time between prompts, the second value is the ratio of time to spend on that prompt.')
-    form.write('E.G (\'river\', 1); (\'lava\', 1) will do half iterations on river and half on lava. You have to use quotes around the prompts in the ratio sets.')
-    form.write('You can also do multiple prompts, concurrently. Individual prompts don\'t need quotes.')
     prompts = []
     for i in range(num_prompts):
         if len(prompts) >= i:
