@@ -37,7 +37,7 @@ def prompts_form(form):
                 return parsed_prompt
             else:
                 return prompt
-        return list(map(parse, prompts))
+        prompts = list(map(parse, prompts))
     return prompts, instr
 
 def state_to_args(state):
