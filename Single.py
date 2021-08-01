@@ -21,8 +21,8 @@ class PromptGetter():
 
 # defines a single run
 class Single:
-    def __init__(self, args, title=None):
-        self.title = title if title else args['prompts']
+    def __init__(self, args, title=''):
+        self.title = title if title != '' else args['prompts']
         self.prompt = args['prompts']
         self.image_prompts = args['image_prompts']
         self.args = args

@@ -4,7 +4,7 @@ import argparse
 from ast import literal_eval
 
 def windows_path_sanitize(string):
-    return ''.join(i for i in string if i not in ':*?<>|')
+    return ''.join(i for i in string if i not in ' \'\",[]():*?<>|')
 
 def dev_count():
     return torch.cuda.device_count()

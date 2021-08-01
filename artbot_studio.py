@@ -15,14 +15,13 @@ state = st.session_state
 # st.write(f'Device count: {util.dev_count()}')
 side = st.sidebar
 util.init_state_field('running', state, False)
-state['running'] = st.button('Run')
-
+state['running'] = st.sidebar.button('Run')
 
 util.init_state_field('args', state, {
     'prompts': [''],
     'image_prompts': None,
-    'iterations': 100,
-    'images_per_prompt': 30,
+    'iterations': 500,
+    'images_per_prompt': 150,
     'noise_prompt_seeds': [],
     'noise_prompt_weights': [],
     'size': [1000, 500],
@@ -56,9 +55,48 @@ args['prompts'] = util.prompts_form(num_prompts, form)
 form.form_submit_button('Update (stops run)')
 
 if not state['running']:
-    st.write('Use semicolon separated tuples to split iteration time between prompts, the second value is the ratio of time to spend on that prompt.')
-    st.write('E.G (\'river\', 1); (\'lava\', 1) will do half iterations on river and half on lava. You have to use quotes around the prompts in the ratio sets.')
-    st.write('You can also do multiple prompts, concurrently. Individual prompts don\'t need quotes.')
+    # streamlit magic command, this will be parsed as markdown
+    '''
+    # Artbot Studio
+    Use semicolon separated tuples to split iteration time between prompts, the second value is the ratio of time to spend on that prompt.
+    E.G `('river', 1); ('lava', 1)` will do half iterations on river and half on lava. You have to use quotes around these prompts. Single prompts don't need quotes.
+    
+    If you do too many images per prompt the previews will stop displaying. The images and video should stll be saved though, you can see them in the terminal/Colab tab
+    
+    Here's some cool prompts to start with:
+    - `Harmony`
+    - `Dynamic`
+    - `Multiple`
+    - `Parallel`
+    - `Concurrent`
+    - `Industrial`
+    - `('fire lava', 1); ('mountain water', 1); ('ocean waves', 1)`
+    - `('sunrise sunset horizon', 1); ('ocean', 2); ('forest', 3)`
+
+    You can also add artist styles using `by` or `in the style of`, for example `Dynamic by Van Gogh`.
+    Here's some good ones:
+    - `Van Gogh`
+    - `Salvador Dali`
+    - `M.C. Escher`
+    - `Claude Monet`
+    - `Alex Grey`
+    - `Thomas Moran`
+    - `Studio Ghibli`
+    - `Odilon Redon`
+
+    I call these render strings. The model was trained with images from online art boards like Artstation, so these strings will make it more realistic/artsy.
+    I just put them on the end, or use a | to seperate them. For example `Dynamic by Van Gogh trending on Artstation | vray`
+    - `Artstation`
+    - `Trending on Artstation`
+    - `ArtstationHQ`
+    - `Unreal Engine`
+    - `vray`
+    - `photorealistic`
+    - `photo`
+    - `painting`
+    - `oil painting`
+    - `matte painting`
+    '''
 if state['running'] and args:
 # write info and do run
     clean_args = args.copy()
@@ -66,7 +104,7 @@ if state['running'] and args:
         del clean_args['prompts'][0]
     args = clean_args
     if batch_type == 'Single':
-        batch = Single.Single(clean_args, title='tmp')
+        batch = Single.Single(clean_args)
         # this will pipe most output from colab to streamlit
     def st_print(*args):
         strs = map(pprint.pformat, args)

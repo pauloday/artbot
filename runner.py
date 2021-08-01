@@ -202,6 +202,8 @@ def get_current_prompt(schedule, i_pct):
             return prompt[0]
     return schedule[-1][0]
 
+limit_stamp = math.floor(time.time())
+
 # prompts here is a single image's prompts, not a batch of prompts
 # each prompt can be an array of tuples with ('prompt', ratio)
 # ratio is the time spent on the prompt relative to the others in the array
@@ -273,6 +275,20 @@ def run_prompt(args, update_box, add_frame, dev=0, image_name=None,):
         z_q = vector_quantize(z.movedim(1, 3), model.quantize.embedding.weight).movedim(3, 1)
         return clamp_with_grad(model.decode(z_q).add(1).div(2), 0, 1)
 
+    # rate limiting so ngrok doesn't kill image previews
+    # also when I self host the whole thing I don't want to ddos/bankrupt myself
+    # limit_period = 60
+    # display_limit = 38 # ngrok free limit is 40, account for rounding/lag
+    # displays = 0
+    # def limited_write(image):
+    #     now = math.floor(time.time())
+    #     if limit_stamp in locals() or limit_stamp in globals():
+    #         if now - limit_stamp > limit_period:
+    #             limit_stamp = now
+    #             displays = 0
+    #         if displays < display_limit:
+    #             displays += 1
+    #             image_box.image(file)
     @torch.no_grad()
     def checkin(i, losses):
         file = u.windows_path_sanitize(f'{args["gallery"]}/{args["prompts"]}-{i}.jpg')
