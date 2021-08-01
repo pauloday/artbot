@@ -45,6 +45,7 @@ batch_type = 'Single'
 # )
 # set up a batch
 form = st.sidebar.form(key='side_form')
+form.form_submit_button('Update (stops run)')
 args['iterations'] = form.number_input('Iterations', min_value=1, value=int(args['iterations']))
 args['images_per_prompt'] = form.number_input('Images per prompt', min_value=1, value=int(args['images_per_prompt']))
 
@@ -52,16 +53,15 @@ args['size'][0] = form.number_input('Width', min_value=0, value=int(args['size']
 args['size'][1] = form.number_input('Height', min_value=0, value=int(args['size'][1]))
 num_prompts = form.number_input('Number of prompts', min_value=1, value=1)
 args['prompts'] = util.prompts_form(num_prompts, form)
-form.form_submit_button('Update (stops run)')
 
 if not state['running']:
     # streamlit magic command, this will be parsed as markdown
     '''
     # Artbot Studio
-    Use semicolon separated tuples to split iteration time between prompts, the second value is the ratio of time to spend on that prompt.
-    E.G `('river', 1); ('lava', 1)` will do half iterations on river and half on lava. You have to use quotes around these prompts. Single prompts don't need quotes.
+    Double semicolon seperated pairs to switch the prompt midway through a run. The second value is the ratio of time to spend on that prompt.
+    E.G `river, 1;;lava, 1` will do half iterations on river and half on lava.
     
-    If you do too many images per prompt the previews will stop displaying. The images and video should stll be saved though, you can see them in the terminal/Colab tab
+    If you do too many images per prompt the previews may stop displaying. The images and video should stll be saved though, you can see them in file browser in the terminal/Colab tab.
     
     Here's some cool prompts to start with:
     - `Harmony`
@@ -70,8 +70,8 @@ if not state['running']:
     - `Parallel`
     - `Concurrent`
     - `Industrial`
-    - `('fire lava', 1); ('mountain water', 1); ('ocean waves', 1)`
-    - `('sunrise sunset horizon', 1); ('ocean', 2); ('forest', 3)`
+    - `fire lava, 1;;mountain water, 1;;ocean waves', 1`
+    - `sunrise sunset horizon, 1;;ocean, 2;;forest, 3`
 
     You can also add artist styles using `by` or `in the style of`, for example `Dynamic by Van Gogh`.
     Here's some good ones:
@@ -104,12 +104,13 @@ if state['running'] and args:
         del clean_args['prompts'][0]
     args = clean_args
     if batch_type == 'Single':
-        batch = Single.Single(clean_args)
-        # this will pipe most output from colab to streamlit
+        title = util.windows_path_sanitize(str(args['prompts']))
+        batch = Single.Single(clean_args, title)
+
+    # this will pipe most output from colab to streamlit
     def st_print(*args):
         strs = map(pprint.pformat, args)
         st.write(' '.join(strs))
-
     if 'oldprint' not in __builtins__:
         __builtins__['oldprint'] = __builtins__['print']
         __builtins__['print'] = st_print

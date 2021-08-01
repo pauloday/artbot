@@ -1,10 +1,13 @@
 import torch
-import os
+import os, re
 import argparse
 from ast import literal_eval
 
 def windows_path_sanitize(string):
-    return ''.join(i for i in string if i not in ' \'\",[]():*?<>|')
+    return ''.join(i for i in string if i not in ' ,[]():*?<>|')
+
+def image_path(args, i):
+    return windows_path_sanitize(f'{args["gallery"]}/{args["prompts"]}-{i}.jpg')
 
 def dev_count():
     return torch.cuda.device_count()
@@ -20,18 +23,13 @@ def prompts_form(num_prompts, form):
         if len(prompts) >= i:
             prompts.append('')
         prompt = form.text_area(f'Prompt #{i + 1}', value=prompts[i])
-        # this was loaded from state and is a ratio set, parse to the semicolon list
-        if len(prompt) > 0 and prompt[0] == '[':
-            prompt = ''
-            parsed = literal_eval(prompts[i])
-            for tup in parsed:
-                print(prompt + f'{tup}; ')
-                prompt = prompt + (f'{tup}; ')
-        if len(prompt) > 0 and prompt[0] == '(':
-            tups = prompt.split(';')
+        if len(prompt) > 0 and ';;' in prompt:
+            tups = prompt.split(';;')
             parsed_prompt = []
-            for tup in tups:
-                parsed_prompt.append(literal_eval(tup.strip()))
+            for tup_str in tups:
+                groups = re.search(r'(.*),(.*)', tup_str).groups()
+                tup = (groups[0].strip(), float(groups[1]))
+                parsed_prompt.append(tup)
             prompt = parsed_prompt
         prompts[i] = prompt
     return prompts

@@ -4,7 +4,7 @@ import io
 from pathlib import Path
 import os
 import concurrent.futures
-import util as u
+import util
 
 from IPython import display
 from omegaconf import OmegaConf
@@ -202,8 +202,6 @@ def get_current_prompt(schedule, i_pct):
             return prompt[0]
     return schedule[-1][0]
 
-limit_stamp = math.floor(time.time())
-
 # prompts here is a single image's prompts, not a batch of prompts
 # each prompt can be an array of tuples with ('prompt', ratio)
 # ratio is the time spent on the prompt relative to the others in the array
@@ -290,19 +288,30 @@ def run_prompt(args, update_box, add_frame, dev=0, image_name=None,):
     #             displays += 1
     #             image_box.image(file)
     @torch.no_grad()
-    def checkin(i, losses):
-        file = u.windows_path_sanitize(f'{args["gallery"]}/{args["prompts"]}-{i}.jpg')
-        if image_name:
-            file = image_name(args['prompts'], i)
+    def checkin(i, losses, out_path):
         losses_str = ', '.join(f'{loss.item():g}' for loss in losses)
-        # this is some math thing I don't want to get rid of, but it takes a lot of space
+        # this is some math thing I don't want to get rid of, but it takes a lot of space for bigger runs
         #print(f'i: {i}, loss: {sum(losses).item():g}, losses: {losses_str}')
         out = synth(z)
-        TF.to_pil_image(out[0].cpu()).save(file)
-        image_box.image(file)
-        add_frame(file)
-        bottom_status.write(f'Wrote {file}')
+        TF.to_pil_image(out[0].cpu()).save(out_path)
+        add_frame(out_path)
+        bottom_status.write(f'Wrote {out_path}')
         
+    # how many images in the last minute
+    displayed_images = 0
+    def limited_display(image, rate, limit_stamp):
+        if displayed_images < rate:
+            image_box.image(image)
+            displayed_images += 1
+        else:
+            print('limited')
+        now = math.floor(time.time())
+        if now - limit_stamp > 60:
+            limit_stamp = now
+            print('unlimited')
+        print(now - limit_stamp)
+        return limit_stamp
+
     def ascend_txt():
         out = synth(z)
         iii = perceptor.encode_image(normalize(make_cutouts(out))).float()
@@ -317,23 +326,30 @@ def run_prompt(args, update_box, add_frame, dev=0, image_name=None,):
 
         return result
 
-    def train(i):
+    def train(i, limit_stamp):
+        new_stamp = limit_stamp
         opt.zero_grad()
         lossAll = ascend_txt()
         display_freq = math.floor(args['iterations']/args['images_per_prompt'])
         if (i % display_freq == 0 and i != 0):
-            checkin(i, lossAll)
+            out_path = util.image_path(args, i)
+            if image_name:
+                out_path = image_name(args['prompts'], i)
+            checkin(i, lossAll, out_path)
+            new_stamp = limited_display(out_path, 38, limit_stamp) # ngrok free tier is 40, take 2 off for padding
         loss = sum(lossAll)
         loss.backward()
         opt.step()
         with torch.no_grad():
             z.copy_(z.maximum(z_min).minimum(z_max))
+        return limit_stamp
 
     i = 0
     try:
         with stqdm(total=args['iterations'] + 1, st_container=update_box) as pbar:
+            limit_stamp = math.floor(time.time())
             while i <= args['iterations']:
-                train(i)
+                train(i, limit_stamp)
                 set_prompts(i)
                 i += 1
                 pbar.update()
