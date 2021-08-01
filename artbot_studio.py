@@ -15,13 +15,12 @@ state = st.session_state
 # st.write(f'Device count: {util.dev_count()}')
 side = st.sidebar
 util.init_state_field('running', state, False)
-state['running'] = st.sidebar.button('Run')
 
 util.init_state_field('args', state, {
     'prompts': [''],
     'image_prompts': None,
     'iterations': 300,
-    'images_per_prompt': 80,
+    'images_per_prompt': 100,
     'noise_prompt_seeds': [],
     'noise_prompt_weights': [],
     'size': [1000, 500],
@@ -45,7 +44,9 @@ batch_type = 'Single'
 # )
 # set up a batch
 form = st.sidebar.form(key='side_form')
-form.form_submit_button('Update (stops run)')
+submitted = form.form_submit_button('Run')
+if submitted:
+    state['running'] = True
 args['iterations'] = form.number_input('Iterations', min_value=1, value=int(args['iterations']))
 args['images_per_prompt'] = form.number_input('Images per prompt', min_value=1, value=int(args['images_per_prompt']))
 
@@ -64,12 +65,14 @@ if not state['running']:
     If you do too many images per prompt the previews may stop displaying. The images and video should stll be saved though, you can see them in file browser in the terminal/Colab tab.
     
     Here's some cool prompts to start with:
+    - `Multiple`
     - `Harmony`
     - `Dynamic`
-    - `Multiple`
     - `Parallel`
     - `Concurrent`
     - `Industrial`
+    - `Simple`
+    - `Flow`
     - `fire lava, 1;;mountain water, 1;;ocean waves', 1`
     - `sunrise sunset horizon, 1;;ocean, 2;;forest, 3`
 
@@ -114,11 +117,16 @@ if state['running'] and args:
     if 'oldprint' not in __builtins__:
         __builtins__['oldprint'] = __builtins__['print']
         __builtins__['print'] = st_print
-    st.session_state['running'] = False
     video_box = st.empty()
     top_status = st.empty()
     top_status.write(f'Generating {args["prompts"]}...')
     update_box = st.beta_container()
+    '''
+    Image preview is rate limited, it will only update once every 5 seconds.
+    If the image dimensions are too high, you'll get an out of memory error.
+    When this happens you'll have to go back to the Colab tab, restart the runtime, and re-run the last 2 cells.
+    Otherwise you'll just run out of memory on all runs.
+    '''
 
     # set up so frames can be added as they're generated
     # the output dir may not be only for this run, so this is the best way
@@ -129,7 +137,10 @@ if state['running'] and args:
 
     # do the run
     batch.write_info()
+    st.sidebar.write(batch.args)
     batch.run(update_box, add_frame)
+    st.session_state['running'] = False
+
 
     # copy images into a tmp dir with names set up for ffmpeg
     tmp_dir = f'{gallery}/tmp'
@@ -150,7 +161,3 @@ if state['running'] and args:
 
     video_box.video(str(video_name))
     top_status.write(f'Run complete, output saved to {batch.args["gallery"]}.')
-
-if args:
-    side.write('Loaded arguments:')
-    side.write(args)

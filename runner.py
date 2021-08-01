@@ -202,12 +202,27 @@ def get_current_prompt(schedule, i_pct):
             return prompt[0]
     return schedule[-1][0]
 
+# rate as in only display a image every n seconds
+class ImageWriter():
+    def __init__(self, rate, writer):
+        self.rate = rate
+        self.out_stamp = math.floor(time.time())
+        self.writer = writer
+    
+    def write(self, image):
+        now = math.floor(time.time())
+        if now - self.out_stamp > self.rate:
+            self.out_stamp = now
+            self.writer(image)
+
+
 # prompts here is a single image's prompts, not a batch of prompts
 # each prompt can be an array of tuples with ('prompt', ratio)
 # ratio is the time spent on the prompt relative to the others in the array
 # so [('space', 1), ('ocean', 1)] will do space for 50% iterations, then ocean
 def run_prompt(args, update_box, add_frame, dev=0, image_name=None,):
     image_box = update_box.empty()
+    image_writer = ImageWriter(3, image_box.image) # hand tuned to never clobber the output with ngrok free tier
     bottom_status = update_box.empty()
     device_name = f'cuda:{dev}'
     device = torch.device(device_name)
@@ -273,20 +288,6 @@ def run_prompt(args, update_box, add_frame, dev=0, image_name=None,):
         z_q = vector_quantize(z.movedim(1, 3), model.quantize.embedding.weight).movedim(3, 1)
         return clamp_with_grad(model.decode(z_q).add(1).div(2), 0, 1)
 
-    # rate limiting so ngrok doesn't kill image previews
-    # also when I self host the whole thing I don't want to ddos/bankrupt myself
-    # limit_period = 60
-    # display_limit = 38 # ngrok free limit is 40, account for rounding/lag
-    # displays = 0
-    # def limited_write(image):
-    #     now = math.floor(time.time())
-    #     if limit_stamp in locals() or limit_stamp in globals():
-    #         if now - limit_stamp > limit_period:
-    #             limit_stamp = now
-    #             displays = 0
-    #         if displays < display_limit:
-    #             displays += 1
-    #             image_box.image(file)
     @torch.no_grad()
     def checkin(i, losses, out_path):
         losses_str = ', '.join(f'{loss.item():g}' for loss in losses)
@@ -294,23 +295,9 @@ def run_prompt(args, update_box, add_frame, dev=0, image_name=None,):
         #print(f'i: {i}, loss: {sum(losses).item():g}, losses: {losses_str}')
         out = synth(z)
         TF.to_pil_image(out[0].cpu()).save(out_path)
+        image_writer.write(out_path)
         add_frame(out_path)
         bottom_status.write(f'Wrote {out_path}')
-        
-    # how many images in the last minute
-    displayed_images = 0
-    def limited_display(image, rate, limit_stamp):
-        if displayed_images < rate:
-            image_box.image(image)
-            displayed_images += 1
-        else:
-            print('limited')
-        now = math.floor(time.time())
-        if now - limit_stamp > 60:
-            limit_stamp = now
-            print('unlimited')
-        print(now - limit_stamp)
-        return limit_stamp
 
     def ascend_txt():
         out = synth(z)
@@ -326,30 +313,31 @@ def run_prompt(args, update_box, add_frame, dev=0, image_name=None,):
 
         return result
 
-    def train(i, limit_stamp):
+    def train(i):
         new_stamp = limit_stamp
         opt.zero_grad()
         lossAll = ascend_txt()
         display_freq = math.floor(args['iterations']/args['images_per_prompt'])
+        out_path = util.image_path(args, i)
+        if image_name:
+            out_path = image_name(args['prompts'], i)
         if (i % display_freq == 0 and i != 0):
-            out_path = util.image_path(args, i)
-            if image_name:
-                out_path = image_name(args['prompts'], i)
             checkin(i, lossAll, out_path)
-            new_stamp = limited_display(out_path, 38, limit_stamp) # ngrok free tier is 40, take 2 off for padding
         loss = sum(lossAll)
         loss.backward()
         opt.step()
         with torch.no_grad():
             z.copy_(z.maximum(z_min).minimum(z_max))
-        return limit_stamp
+        return out_path
 
     i = 0
     try:
         with stqdm(total=args['iterations'] + 1, st_container=update_box) as pbar:
             limit_stamp = math.floor(time.time())
+            displayed_images = 0
+            last_image = False
             while i <= args['iterations']:
-                train(i, limit_stamp)
+                last_image = train(i)
                 set_prompts(i)
                 i += 1
                 pbar.update()

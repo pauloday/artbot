@@ -31,7 +31,6 @@ class Single:
         self.args['gallery'] = gallery
         self.image_prompts_folder = f'{gallery}/image_prompts'
         self.info_folder = f'{gallery}/info'
-        self.info_string = f'prompts = {self.prompt}\nimage_prompts = {self.image_prompts}'
         if not os.path.exists(gallery):
             os.makedirs(gallery)
         if not os.path.exists(self.image_prompts_folder):
@@ -40,7 +39,7 @@ class Single:
             os.makedirs(self.info_folder)
         
     def write_info(self):
-        info_string = f'{self}\n{self.info_string}\n{pprint.pformat(self.args)}'
+        info_string = f'{pprint.pformat(self.args)}'
         # write with timestamp to preserve info from reruns
         info_path = f'{self.info_folder}/info-{math.floor(time.time())}.txt'
         file = open(info_path, 'w+')
