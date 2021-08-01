@@ -17,22 +17,28 @@ def init_state_field(field, state, default):
         state[field] = default
 
 # just display existing prompts
-def prompts_form(num_prompts, form):
+# legacy structure, this should just be a parser later
+def prompts_form(form):
     prompts = []
-    for i in range(num_prompts):
-        if len(prompts) >= i:
-            prompts.append('')
-        prompt = form.text_area(f'Prompt #{i + 1}', value=prompts[i])
-        if len(prompt) > 0 and ';;' in prompt:
-            tups = prompt.split(';;')
-            parsed_prompt = []
-            for tup_str in tups:
-                groups = re.search(r'(.*),(.*)', tup_str).groups()
-                tup = (groups[0].strip(), float(groups[1]))
-                parsed_prompt.append(tup)
-            prompt = parsed_prompt
-        prompts[i] = prompt
-    return prompts
+    instr = form.text_area(f'Prompt')
+    if len(instr) > 0:
+        if '##' in instr:
+            prompts = prompts + instr.split('##')
+        else:
+            prompts.append(instr)
+        def parse(prompt):
+            if ';;' in prompt:
+                tups = prompt.split(';;')
+                parsed_prompt = []
+                for tup_str in tups:
+                    groups = re.search(r'(.*),(.*)', tup_str).groups()
+                    tup = (groups[0].strip(), float(groups[1]))
+                    parsed_prompt.append(tup)
+                return parsed_prompt
+            else:
+                return prompt
+        return list(map(parse, prompts))
+    return prompts, instr
 
 def state_to_args(state):
     return argparse.Namespace(

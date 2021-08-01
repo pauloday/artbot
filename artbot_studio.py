@@ -47,7 +47,7 @@ form = st.sidebar.form(key='side_form')
 submitted = form.form_submit_button('Run')
 if submitted:
     state['running'] = True
-args['prompts'] = util.prompts_form(1, form)
+args['prompts'], title = util.prompts_form(form)
 args['iterations'] = form.number_input('Iterations', min_value=1, value=int(args['iterations']))
 args['images_per_prompt'] = form.number_input('Images per prompt', min_value=1, value=int(args['images_per_prompt']))
 
@@ -61,6 +61,9 @@ if not state['running']:
     # Artbot Studio
     Double semicolon seperated pairs to switch the prompt midway through a run. The second value is the ratio of time to spend on that prompt.
     E.G `river, 1;;lava, 1` will do half iterations on river and half on lava.
+
+    You can also run prompts concurrently with '##'. This can be combined with the switching prompts to make complex prompts:
+    `river, 1;;lava, 1##ocean waves`
     
     If you do too many images per prompt the previews may stop displaying. The images and video should stll be saved though, you can see them in file browser in the terminal/Colab tab.
     
@@ -107,7 +110,6 @@ if state['running'] and args:
         del clean_args['prompts'][0]
     args = clean_args
     if batch_type == 'Single':
-        title = util.windows_path_sanitize(str(args['prompts']))
         batch = Single.Single(clean_args, title)
 
     # this will pipe most output from colab to streamlit
