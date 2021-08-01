@@ -50,6 +50,7 @@ if submitted:
 args['prompts'], title = util.prompts_form(form)
 args['iterations'] = form.number_input('Iterations', min_value=1, value=int(args['iterations']))
 args['seed'] = form.number_input('Seed (adjust to get different versions)', min_value=0, value=0)
+args['cutn'] = form.number_input('Cutouts (lower usually means less coherent)', min_value=1, value=64)
 args['images_per_prompt'] = form.number_input('Images per prompt', min_value=1, value=int(args['images_per_prompt']))
 
 args['size'][0] = form.number_input('Width', min_value=0, value=int(args['size'][0]))
