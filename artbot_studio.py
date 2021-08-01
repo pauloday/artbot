@@ -49,6 +49,7 @@ if submitted:
     state['running'] = True
 args['prompts'], title = util.prompts_form(form)
 args['iterations'] = form.number_input('Iterations', min_value=1, value=int(args['iterations']))
+args['seed'] = form.number_input('Seed (adjust to get different versions)', min_value=0, value=0)
 args['images_per_prompt'] = form.number_input('Images per prompt', min_value=1, value=int(args['images_per_prompt']))
 
 args['size'][0] = form.number_input('Width', min_value=0, value=int(args['size'][0]))
@@ -80,7 +81,7 @@ if not state['running']:
     - `Outer space`
     - `fire lava, 1--mountain water, 1--ocean waves', 1`
     - `sunrise sunset horizon, 1--ocean, 2--forest, 3`
-    - `mountains ArtstationHQ, 1--outer space, 1##dynamic, 1--multiple, 1--forest landscape by Van Gogh, 1##ocean waves`
+    - `mountains, 1--bright sky, 1##multiple, 1--dynamic, 2--frothy, 3##ocean waves trending on artstation`
 
     You can also add artist styles using `by` or `in the style of`, for example `Dynamic by Van Gogh`.
     Here's some good ones:
