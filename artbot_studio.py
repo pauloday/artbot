@@ -47,13 +47,14 @@ form = st.sidebar.form(key='side_form')
 submitted = form.form_submit_button('Run')
 if submitted:
     state['running'] = True
+num_prompts = form.number_input('Number of prompts', min_value=1, value=1)
+args['prompts'] = util.prompts_form(num_prompts, form)
 args['iterations'] = form.number_input('Iterations', min_value=1, value=int(args['iterations']))
 args['images_per_prompt'] = form.number_input('Images per prompt', min_value=1, value=int(args['images_per_prompt']))
 
 args['size'][0] = form.number_input('Width', min_value=0, value=int(args['size'][0]))
 args['size'][1] = form.number_input('Height', min_value=0, value=int(args['size'][1]))
-num_prompts = form.number_input('Number of prompts', min_value=1, value=1)
-args['prompts'] = util.prompts_form(num_prompts, form)
+
 
 if not state['running']:
     # streamlit magic command, this will be parsed as markdown
