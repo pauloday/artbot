@@ -122,7 +122,7 @@ if state['running'] and args:
     top_status.write(f'Generating {args["prompts"]}...')
     update_box = st.beta_container()
     '''
-    Image preview is rate limited, it will only update once every 5 seconds.
+    Image preview is rate limited, it will only update once every 3 seconds.
     If the image dimensions are too high, you'll get an out of memory error.
     When this happens you'll have to go back to the Colab tab, restart the runtime, and re-run the last 2 cells.
     Otherwise you'll just run out of memory on all runs.
