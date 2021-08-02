@@ -222,7 +222,7 @@ class ImageWriter():
 # so [('space', 1), ('ocean', 1)] will do space for 50% iterations, then ocean
 def run_prompt(args, update_box, add_frame, dev=0, image_name=None,):
     image_box = update_box.empty()
-    image_writer = ImageWriter(3, image_box.image) # hand tuned to never clobber the output with ngrok free tier
+    image_writer = ImageWriter(4, image_box.image) # hand tuned to never clobber the output with ngrok free tier
     bottom_status = update_box.empty()
     device_name = f'cuda:{dev}'
     device = torch.device(device_name)

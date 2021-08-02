@@ -30,7 +30,7 @@ class Single:
         gallery = f'/content/Gaillery/{title}'
         self.args['gallery'] = gallery
         self.image_prompts_folder = f'{gallery}/image_prompts'
-        self.info_folder = f'{gallery}/info'
+        self.info_folder = '/content/Gaillery/info'
         if not os.path.exists(gallery):
             os.makedirs(gallery)
         if not os.path.exists(self.image_prompts_folder):
