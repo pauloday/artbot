@@ -265,10 +265,11 @@ def run_prompt(args, update_box, add_frame, dev=0, image_name=None,):
         for p in args['prompts']:
             p_str = p[0] if type(p) == tuple else p
             prompt = get_current_prompt(p, i/args['iterations']) if type(p) == list else p_str
-            curr_ratio_prompt = prompt
-            txt, weight, stop = parse_prompt(prompt)
-            embed = perceptor.encode_text(clip.tokenize(txt).to(device)).float()
-            pMs.append(Prompt(embed, weight, stop).to(device))
+            if prompt != '_': # allow empty prompts for placeholder
+                curr_ratio_prompt = prompt
+                txt, weight, stop = parse_prompt(prompt)
+                embed = perceptor.encode_text(clip.tokenize(txt).to(device)).float()
+                pMs.append(Prompt(embed, weight, stop).to(device))
 
         if args['image_prompts'] is not None:
             for prompt in args['image_prompts']:
