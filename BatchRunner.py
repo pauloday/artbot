@@ -21,31 +21,32 @@ class BatchRunner():
     # If the output doesn't exist, return false
     def set_outputs(self, run):
         def parse(string):
-            if string:
+            if string and string != None and type(string) == str:
                 if '*' in string:
                     in_run = string[1:]
                     if type(self.runs[in_run]) == list:
-                        return self.runs[in_run]
+                        return self.runs[in_run[-1]]
+                return string # valid string but not a pointer
             return False
-        init_image = run['init_image']
         image_prompts = run['image_prompts']
-        if init_image != None and image_prompts != None:
-            init_image = parse(init_image)
-            image_prompts = list(map(parse, image_prompts))
-            if init_image and all(image_prompts):
-                run['init_image'] = init_image
-                run['image_prompts'] = image_prompts
-                return run
-            return False
-        else:
+        init_image = parse(run['init_image'])
+        image_prompts = list(map(parse, image_prompts if image_prompts != None else []))
+        if init_image:
+            run['init_image'] = init_image
+        if all(image_prompts):
+            run['image_prompts'] = image_prompts
+        if init_image and all(image_prompts):
             return run
+        else:
+            return False
 
     # iterate through the unfinished runs and do the next possible one
-    # once that's done, save the output paths an remove it from the runlist
+    # once that's done, save the output paths in place of the run args
+    # theoretically this can just be run once per core an it works (with a lock)
     def run_next(self):
         for run_name in self.runs:
             run = self.runs[run_name]
-            if type(run) == dict:
+            if type(run) == dict: # run args is dict - eventually make it class
                 parsed_run = self.set_outputs(run)
                 if parsed_run: # this run is ready
                     out_folder = f'{self.gallery}/{run_name}'
