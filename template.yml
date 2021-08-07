@@ -18,7 +18,7 @@ title: Abstract Landscape
 # Make a base image
 base:
   prompts: 'sunrise sunset horizon,1--ocean,2--forest,3||Dynamic'
-  iterations: 300
+  iterations: 3
   images: 1
 # try a couple of different ways to touch it up Van Gogh style
 init_image: # use base as init image

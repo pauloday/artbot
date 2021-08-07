@@ -1,4 +1,4 @@
-import threading
+import os, threading
 import math, time
 
 # Run prompts concurrently
@@ -14,6 +14,8 @@ class BatchRunner():
         self.runner = runner
         self._lock = threading.Lock()
         self.gallery = f'Gaillery/{self.title}'
+        if not os.path.exists(self.gallery):
+            os.makedirs(self.gallery)
     
     # replace prompt chaining '*run' with output path, if it exists yet
     # If the output doesn't exist, return false
@@ -47,6 +49,8 @@ class BatchRunner():
                 parsed_run = self.set_outputs(run)
                 if parsed_run: # this run is ready
                     out_folder = f'{self.gallery}/{run_name}'
+                    if not os.path.exists(out_folder):
+                        os.makedirs(out_folder)
                     def image_name_fn(iteration):
                         return f'{out_folder}/{iteration}-{math.floor(time.time())}.jpg'
                     out_paths = self.runner(parsed_run, image_name_fn)
