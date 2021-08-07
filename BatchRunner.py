@@ -52,8 +52,6 @@ class BatchRunner():
                     out_paths = self.runner(parsed_run, image_name_fn)
                     self.runs[run_name] = out_paths
                     self.run_next()
-                    
-
 
     def run(self):
         self.run_next()
