@@ -1,0 +1,34 @@
+# A document can have any number of runs
+# Runs can use the output from prior runs as inputs for prompts and init images
+# Reference image outputs with '*name'
+# They don't have to be in order in the document, but it'll make things faster
+# Only the prompt is required. When a value is left out the last known one is used
+# So set all your values for the runs in the first one and they'll stick
+# See parse.py for allowed values and defaults
+
+# Prompt Strings:
+# The prompt and image_prompt have some special characters:
+# || - Run prompts concurrently on the same image
+# -- - Run prompts sequentially on the same image
+# Sequential has a optional ratio of time spent per prompt
+# Pass it to each prompt with a comma: 'one--two,2'
+# This would do 'one' and 'two' at a 1:2 ratio
+
+title: Abstract Landscape
+# Make a base image
+base:
+  prompt: 'sunrise sunset horizon--ocean,2--forest,3||Dynamic'
+  iterations: 300
+  images: 1
+# try a couple of different ways to touch it up Van Gogh style
+init_image: # use base as init image
+  prompt: 'sunrise sunset horizon ocean forest by Van Gogh'
+  init_image: '*base'
+  iterations: 150
+  images: 5
+image_prompt: # use base as prompt
+  init_image: null # make sure to reset values you don't want to carry
+  image_prompt: '*base'
+both: # try base as prompt and init image
+  init_image: '*base'
+  image_prompt: '*base'
