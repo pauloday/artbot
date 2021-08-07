@@ -20,14 +20,16 @@ class BatchRunner():
     # replace prompt chaining '*run' with output path, if it exists yet
     # If the output doesn't exist, return false
     def set_outputs(self, run):
+        print(run)
         def parse(string):
             if string and string != None and type(string) == str:
                 if '*' in string:
                     in_run = string[1:]
                     if type(self.runs[in_run]) == list:
                         return self.runs[in_run[-1]]
-                return string # valid string but not a pointer
-            return False
+                else:
+                    return string # valid string but not a pointer
+            return False # not a valid string, or a string with '*' that can't be replaced
         image_prompts = run['image_prompts']
         init_image = parse(run['init_image'])
         image_prompts = list(map(parse, image_prompts if image_prompts != None else []))

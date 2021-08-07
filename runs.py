@@ -54,3 +54,8 @@ artist_prompts = list(map(lambda a: f'in the style of {a}',
 twok_dim = [1820, 1026]
 onesixnine_a100 = [1600, 900]
 three2_dim = [1656, 1104]
+
+string = '*base'
+if '*' in string:
+    in_run = string[1:]
+    print(in_run)
