@@ -17,18 +17,30 @@
 title: Abstract Landscape
 # Make a base image
 base:
-  prompt: 'sunrise sunset horizon--ocean,2--forest,3||Dynamic'
+  prompts: 'sunrise sunset horizon,1--ocean,2--forest,3||Dynamic'
   iterations: 300
   images: 1
 # try a couple of different ways to touch it up Van Gogh style
 init_image: # use base as init image
-  prompt: 'sunrise sunset horizon ocean forest by Van Gogh'
+  prompts: 'sunrise sunset horizon ocean forest by Van Gogh'
   init_image: '*base'
   iterations: 150
   images: 5
 image_prompt: # use base as prompt
   init_image: null # make sure to reset values you don't want to carry
-  image_prompt: '*base'
+  image_prompts: '*base'
 both: # try base as prompt and init image
   init_image: '*base'
-  image_prompt: '*base'
+  image_prompts: '*base'
+space_init: # add some outer space stuff
+  prompts: 'Outer Space'
+  init: '*both'
+  image_prompt: null
+space_prompt:
+  init_prompt: null
+  image_prompts: '*both'
+final_blend: # try mixing them all
+  prompts: null
+  image_prompts: '*base||*init_image||*image_prompt||*both||*space_init||*space_prompt'
+final_blend_prompt:
+  prompst: 'landscape'
