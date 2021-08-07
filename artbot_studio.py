@@ -128,7 +128,7 @@ if state['running'] and args:
     video_box = st.empty()
     top_status = st.empty()
     top_status.write(f'Generating {args["prompts"]}...')
-    update_box = st.beta_container()
+    update_box = st.container()
     '''
     Image preview is rate limited, it will only update once every 5 seconds.
     If the image dimensions are too high, you'll get an out of memory error.
