@@ -114,6 +114,7 @@ else:
         tqdm=prog_writer
     )
     gallery = batch.run()
+    open(f'{gallery}/{title}.yml', 'w').write(state['yaml'])
     zip_path = shutil.make_archive(title, format='zip', root_dir=gallery)
     top_status.write(zip_path)
     state['running'] = False
