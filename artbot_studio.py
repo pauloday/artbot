@@ -70,13 +70,13 @@ else:
     prog_box = st.container()
     image_box = st.empty()
     bot_status = st.empty()
+    gallery_box = st.container()
     '''
     Image preview is rate limited, only updates every 5 seconds.
     If image dimensions are too high, you'll get an out of memory error.
     When this happens you'll have to go back to the Colab tab, restart the runtime and get a fresh URL.
     Otherwise you'll just run out of memory on all runs.
     '''
-    gallery_box = st.container()
     draw_editor()
     # this will pipe most output from colab to streamlit
     def st_print(*args):
