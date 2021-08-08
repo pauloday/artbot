@@ -300,7 +300,7 @@ def run_args(args, image_name_fn, dev=0, image_writer=False, tqdm=default_tqdm):
     i = 0
     out_paths = []
     try:
-        with tqdm(total=args['iterations']) as pbar:
+        with tqdm(total=args['iterations'] + 1) as pbar:
             while i <= args['iterations']:
                 pbar.update()
                 out_paths.append(train(i))
