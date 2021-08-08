@@ -80,20 +80,14 @@ class BatchRunner():
                 parsed_run = self.set_outputs(run)
                 if parsed_run: # this run is ready
                     i_format = parsed_run['format'] if 'format' in parsed_run else 'jpg'
-                    one_image = parsed_run['images'] == 1
                     out_folder = f'{self.gallery}/{run_name}'
-                    if one_image:
-                        out_folder = self.gallery
                     if not os.path.exists(out_folder):
                         os.makedirs(out_folder)
                     #TODO: passing this into run is probably slowing it down a lot
                     # since it has to keep a closure of all the stuff in here
                     # ideally we pre make the names and pass them in as strings
                     def image_name_fn(iteration):
-                        name = f'{iteration}-{math.floor(time.time())}'
-                        if one_image:
-                            name = run_name
-                        return f'{out_folder}/{name}.{i_format}'
+                        return f'{out_folder}/{iteration}-{math.floor(time.time())}.{i_format}'
                     # check to see if the output of this run exists
                     # if it does, skip the run and give the user a message
                     checkpoint = glob(f'{out_folder}/{parsed_run["iterations"]}*.{i_format}')

@@ -254,7 +254,7 @@ def run_args(args, image_name_fn, dev=0):
     pMs = []
 
     # in a function so it can run every iteration for switching prompts
-    # optimization: actually do the math for the next switch and only run this when needed
+    # TODO: actually do the math for the next switch and only run this when needed
     # that should allow image prompt switching as well
     def set_prompts(i):
         for p in args['prompts']:
@@ -271,12 +271,13 @@ def run_args(args, image_name_fn, dev=0):
     set_prompts(0)
 
     # running this every iteration is too expensive, goes oom very easy
-    for prompt in args['image_prompts']:
-        path, weight, stop = parse_prompt(prompt)
-        img = resize_image(Image.open(fetch(path)).convert('RGB'), (sideX, sideY))
-        batch = make_cutouts(TF.to_tensor(img).unsqueeze(0).to(device))
-        embed = perceptor.encode_image(normalize(batch)).float()
-        pMs.append(Prompt(embed, weight, stop).to(device))
+    if args['image_prompts']:
+        for prompt in args['image_prompts']:
+            path, weight, stop = parse_prompt(prompt)
+            img = resize_image(Image.open(fetch(path)).convert('RGB'), (sideX, sideY))
+            batch = make_cutouts(TF.to_tensor(img).unsqueeze(0).to(device))
+            embed = perceptor.encode_image(normalize(batch)).float()
+            pMs.append(Prompt(embed, weight, stop).to(device))
 
     def synth(z):
         z_q = vector_quantize(z.movedim(1, 3), model.quantize.embedding.weight).movedim(3, 1)
