@@ -9,9 +9,9 @@ def dev_count():
     return torch.cuda.device_count()
 
 # takes an input yaml file and runs it then returns a zip of the results
-def artbot(instr, image_writer=False):
+def artbot(instr):
     title, runs = parse_yaml(instr)
-    batch = BatchRunner(title, runs, run_args, image_writer)
+    batch = BatchRunner(title, runs, run_args)
     gallery = batch.run()
     open(f'{gallery}/{title}.yml', 'w').write(str(instr))
     return shutil.make_archive(title, format='zip', root_dir=gallery)
