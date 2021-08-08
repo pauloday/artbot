@@ -50,16 +50,17 @@ form = st.sidebar.form(key='side_form')
 template_dict = blender.generate(form)
 submitted = form.form_submit_button('Add to config')
 if submitted:
-    state['yaml'] += dump(template_dict, sort_keys=False)
+    state['yaml'] += '\n' + dump(template_dict, sort_keys=False)
 '''
 # Artbot Studio
 '''
+
 state['yaml'] = st_ace(
     value=state['yaml'],
     language='yaml',
     tab_size='2',
     show_gutter=True,
-    auto_update=True,
+    auto_update=False,
     readonly=state['running']
 )
 running = False
