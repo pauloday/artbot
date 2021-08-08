@@ -37,14 +37,17 @@ def parse_prompt(instr):
                 tups = prompt.split(sequence_token)
                 parsed_prompt = []
                 for tup_str in tups:
-                    groups = search(r'(.*),(.*)', tup_str).groups()
-                    tup = (groups[0].strip(), float(groups[1]))
+                    ratio = search(r'(.*)__(.*)', tup_str)
+                    tup = (tup_str, 1)
+                    if ratio:
+                        groups = ratio.groups()
+                        tup = (groups[0].strip(), float(groups[1]))
                     parsed_prompt.append(tup)
                 return parsed_prompt
             else:
                 return prompt
         prompts = list(map(parse, prompts))
-        return prompts    
+        return prompts
 
 # iterate over the keys
 # for each key, parse into an args dictionary
@@ -59,8 +62,8 @@ def parse_yaml(yaml):
         run = parsed[run_name]
         # try to set all the values
         new_args = {
-            'prompts': parse_prompt(run.get('prompts')),
-            'image_prompts': parse_prompt(run.get('image_prompts')),
+            'prompts': parse_prompt(run.get('prompt')),
+            'image_prompts': parse_prompt(run.get('image_prompt')),
             'iterations': run.get('iterations'),
             'images_per_prompt': run.get('images'),
             'noise_prompt_seeds': run.get('noise_prompt_seeds'),

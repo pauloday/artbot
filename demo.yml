@@ -11,46 +11,38 @@
 # || - Run prompts concurrently on the same image
 # -- - Run prompts sequentially on the same image
 # Sequential has a optional ratio of time spent per prompt
-# Pass it to each prompt with a comma: 'one--two,2'
+# Pass it to each prompt with a __: 'one--two__2'
 # This would do 'one' and 'two' at a 1:2 ratio
 
-title: Abstract Landscape
+title: Boiling Mountains
 # Make a base image
 base:
-  prompts: 'sunrise sunset horizon,1--ocean,2--forest,3'
-  iterations: 100
+  size: [600, 600]
+  prompt: 'fire lava--mountain water--ocean waves__2'
+  iterations: 200
   images: 1
   video: False
-# try a couple of different ways to touch it up Van Gogh style
+# Try addingg James Gurney style a couple ways
 init_image: # use base as init image
-  prompts: 'Dynamic by James Gurney'
+  iterations: 50 # init images are overwritten quickly
+  prompt: 'by James Gurney'
   init_image: '*base'
 image_prompt: # use base as prompt
   init_image: null # make sure to reset values you don't want to carry
   image_prompts: '*base'
-both: # try base as prompt and init image
-  init_image: '*base'
-  image_prompts: '*base'
-space_init: # add some outer space stuff
-  prompts: 'Outer Space'
-  init: '*both'
-  image_prompt: null
-space_prompt:
-  init_prompt: null
-  image_prompts: '*both'
+second_pass: # smooth it out a bit maybe
+  iterations: 150
+  prompt: 'lava--mountain__1.5||ocean waves'
+  image_prompts: '*init_image||*image_prompt'
 final_blend: # try mixing them all
-  # this is half the default size, if I use all the images as prompts and full size it goes oom
-  size: [500, 250]
-  prompts: null
-  image_prompts: '*base||*image_prompt||*init_image||*space_init||*space_prompt'
-final_blend_prompt:
-  prompts: 'landscape'
+  prompt: 'By James Gurney'
+  # this is half the default size__ if you use all the images as prompts and full size it goes oom
+  size: [300, 300]
+  prompt: null
+  image_prompts: '*base||*image_prompt||*init_image||*second_pass'
 upscale:
+  iterations: 400
   # scale the blend back up
-  size: [1000, 500]
-  prompts: null
-  image_prompts: '*final_blend'
-  upscale:
-upscale_prompt:
-  # scale the blend back up
-  prompts: 'landscape'
+  size: [600, 600]
+  prompt: null
+  image_prompt: '*final_blend'
