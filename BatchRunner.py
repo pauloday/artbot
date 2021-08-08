@@ -20,27 +20,39 @@ class BatchRunner():
     # replace prompt chaining '*run' with output path, if it exists yet
     # If the output doesn't exist, return false
     def set_outputs(self, run):
-        print(run)
-        def parse(string):
-            if string and string != None and type(string) == str:
-                if '*' in string:
+        # get the output of a prior run
+        # if the run hasn't finished, return false
+        def get_ref(string):
+            if '*' in string:
                     in_run = string[1:]
                     if type(self.runs[in_run]) == list:
                         return self.runs[in_run[-1]]
-                else:
-                    return string # valid string but not a pointer
-            return False # not a valid string, or a string with '*' that can't be replaced
+                    else:
+                        return False
+        # check a prompt to see if it can be run yet
+        # if it's a ref ('*run'), and it can be fetched, return True
+        # if it's not fetchable, return false
+        # otherwise it's not a ref so return true
+        def is_ref(string):
+            return string and type(string) == str and '*' in string
+        init_image = run['init_image']
         image_prompts = run['image_prompts']
-        init_image = parse(run['init_image'])
-        image_prompts = list(map(parse, image_prompts if image_prompts != None else []))
-        if init_image:
-            run['init_image'] = init_image
-        if all(image_prompts):
-            run['image_prompts'] = image_prompts
-        if init_image and all(image_prompts):
+        image_prompts = image_prompts if image_prompts != None else []
+        prompt_is_ref = all(list(map(is_ref, image_prompts)))
+        init_is_ref = is_ref(init_image)
+        ref_prompt = list(map(get_ref(image_prompts)))
+        ref_init = get_ref(init_image)
+        if not init_is_ref and not prompt_is_ref:
             return run
-        else:
-            return False
+        ret_run = False # from here we know there's at least one ref
+        if init_is_ref and ref_init:
+            run['init_image'] = ref_init
+            ret_run = run
+        if prompt_is_ref and ref_prompt:
+            run['image_prompts'] = ref_prompt
+            ret_run = run
+        return ret_run
+        
 
     # iterate through the unfinished runs and do the next possible one
     # once that's done, save the output paths in place of the run args
