@@ -22,7 +22,7 @@ import shutil
 import threading
 import itertools
 import time
-from tqdm import tqdm
+from tqdm import tqdm as default_tqdm
 
 
 def sinc(x):
@@ -202,20 +202,7 @@ def get_current_prompt(schedule, i_pct):
             return prompt[0]
     return schedule[-1][0]
 
-# rate as in only display a image every n seconds
-class ImageWriter():
-    def __init__(self, rate, writer):
-        self.rate = rate
-        self.out_stamp = math.floor(time.time())
-        self.writer = writer
-    
-    def write(self, image):
-        now = math.floor(time.time())
-        if now - self.out_stamp > self.rate:
-            self.out_stamp = now
-            self.writer(image)
-
-def run_args(args, image_name_fn, dev=0):
+def run_args(args, image_name_fn, dev=0, image_writer=False, tqdm=default_tqdm):
     device_name = f'cuda:{dev}'
     device = torch.device(device_name)
     print('Using device:', device, args['vqgan_checkpoint'])
@@ -290,6 +277,7 @@ def run_args(args, image_name_fn, dev=0):
         #print(f'i: {i}, loss: {sum(losses).item():g}, losses: {losses_str}')
         out = synth(z)
         TF.to_pil_image(out[0].cpu()).save(out_path)
+        image_writer(out_path)
         print(f'Wrote {out_path}')
 
     def ascend_txt():

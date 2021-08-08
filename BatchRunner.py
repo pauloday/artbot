@@ -3,7 +3,7 @@ import torch
 import math, time
 import shutil
 import ffpb
-import tqdm
+from tqdm import tqdm as default_tqdm
 from glob import glob
 
 # Run prompts concurrently
@@ -11,13 +11,16 @@ from glob import glob
 # If it has unfulfilled requirements try the next one
 # don't change the order, assume user ordered it as good as possible
 class BatchRunner():
-    def __init__(self, title, runs, runner):
+    def __init__(self, title, runs, runner, image_writer=False, run_writer=False, tqdm=default_tqdm):
         self.title = title
         # runs starts as an dict of args
         # as runs complete the output image is stored in place of run
         self.runs = runs
         self.runner = runner
         self._lock = threading.Lock()
+        self.image_writer = image_writer
+        self.run_writer = run_writer
+        self.tqdm = tqdm
         self.gallery = f'Gaillery/{self.title}'
         if not os.path.exists(self.gallery):
             os.makedirs(self.gallery)
@@ -54,7 +57,7 @@ class BatchRunner():
             ret_run = run
         return ret_run
         
-    def make_video(self, title, frames):
+    def make_video(self, title, frames, video_name):
         tmp_dir = f'{self.gallery}/tmp'
         if os.path.exists(tmp_dir):
             shutil.rmtree(tmp_dir)
@@ -64,9 +67,8 @@ class BatchRunner():
             if os.path.exists(frame):
                 shutil.copyfile(frame, f'{tmp_dir}/{str(i).zfill(4)}.jpg')
                 i += 1
-        video_name = f'{self.gallery}/{title}.mp4'
         argv = ['-r', '20', '-f', 'image2', '-i', f'{tmp_dir}/%04d.jpg', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', video_name]
-        ffpb.main(argv, tqdm=tqdm)
+        ffpb.main(argv, tqdm=self.tqdm)
         shutil.rmtree(tmp_dir)
 
     # iterate through the unfinished runs and do the next possible one
@@ -86,8 +88,8 @@ class BatchRunner():
                     #TODO: passing this into run is probably slowing it down a lot
                     # since it has to keep a closure of all the stuff in here
                     # ideally we pre make the names and pass them in as strings
-                    def image_name_fn(iteration):
-                        return f'{out_folder}/{iteration}-{math.floor(time.time())}.{i_format}'
+                    def image_name_fn(name):
+                        return f'{out_folder}/{name}-{math.floor(time.time())}.{i_format}'
                     # check to see if the output of this run exists
                     # if it does, skip the run and give the user a message
                     checkpoint = glob(f'{out_folder}/{parsed_run["iterations"]}*.{i_format}')
@@ -96,13 +98,18 @@ class BatchRunner():
                         self.runs[run_name] = checkpoint
                     else:
                         print(f'\nDoing run "{run_name}". Saving output in {out_folder}')
-                        out_paths = self.runner(parsed_run, image_name_fn, dev=0)
+                        out_paths = self.runner(parsed_run, image_name_fn, dev=0, image_writer=self.image_writer, tqdm=self.tqdm)
+                        final_out = f'{self.gallery}/{run_name}.mp4'
                         if 'video' in run and run['video']:
                             self.make_video(run_name, out_paths)
                         else: # no video written to gallery, so put the last output there instead
-                            shutil.copyfile(out_paths[-1], f'{self.gallery}/{run_name}.{i_format}')
+                            out_folder = self.gallery
+                            final_out = image_name_fn(run_name)
+                            shutil.copyfile(out_paths[-1], final_out)
                         self.runs[run_name] = out_paths
                     torch.cuda.empty_cache()
+                    if self.run_writer:
+                        self.run_writer(final_out)
                     self.run_next()
 
     def run(self):
