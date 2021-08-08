@@ -54,9 +54,6 @@ template_dict = blender.generate(form)
 submitted = form.form_submit_button('Add to config')
 if submitted:
     state['yaml'] += '\n' + dump(template_dict, sort_keys=False)
-'''
-# Artbot Studio
-'''
 def draw_editor():
     state['yaml'] = st_ace(
         value=state['yaml'],
@@ -121,6 +118,7 @@ else:
     top_status.write(zip_path)
     state['running'] = False
 '''
+#Artbot Studio
 Welcome to Artbot! Enter a prompt to get started. The image size is tuned for Colab, but the other settings can be changes as you wish.
 `--` seperated prompts to switch midway through a run. By default it'll spend equal time on each prompt, but you can specify a ratio with `__`.
 For example, `river--lava__2` will do half iterations on river and half on lava. The earlier iterations are more impactful, so a 1:1 ratio will skew to the earlier prompts.
