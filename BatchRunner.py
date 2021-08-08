@@ -94,12 +94,13 @@ class BatchRunner():
                     # if it does, skip the run and give the user a message
                     checkpoint = glob(f'{out_folder}/{parsed_run["iterations"]}*.jpg')
                     if len(checkpoint) != 0:
-                        print(f'Found previous output at {checkpoint[0]}, skipping run')
+                        print(f'Found output for {run_name} at {checkpoint[0]}, skipping run')
                         self.runs[run_name] = checkpoint
                     else:
                         print(f'Doing run "{run_name}". Saving output in {out_folder}')
                         out_paths = self.runner(parsed_run, image_name_fn, dev=0)
-                        self.make_video(out_paths)
+                        if 'video' in run and run['video']:
+                            self.make_video(out_paths)
                         self.runs[run_name] = out_paths
                     torch.cuda.empty_cache()
                     self.run_next()

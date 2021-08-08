@@ -39,7 +39,18 @@ space_prompt:
   init_prompt: null
   image_prompts: '*both'
 final_blend: # try mixing them all
+  # this is half the default size, if I use all the images as prompts and full size it goes oom
+  size: [500, 250]
   prompts: null
-  image_prompts: '*init_image||*image_prompt||*space_init||*space_prompt'
+  image_prompts: '*base||*image_prompt||*init_image||*space_init||*space_prompt'
 final_blend_prompt:
+  prompts: 'landscape'
+upscale:
+  # scale the blend back up
+  size: [1000, 500]
+  prompts: null
+  image_prompts: '*final_blend'
+  upscale:
+upscale_prompt:
+  # scale the blend back up
   prompts: 'landscape'

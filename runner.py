@@ -321,12 +321,12 @@ def run_args(args, image_name_fn, dev=0):
     i = 0
     out_paths = []
     try:
-        with tqdm(total=args['iterations'] + 1) as pbar:
+        with tqdm(total=args['iterations']) as pbar:
             while i <= args['iterations']:
+                pbar.update()
                 out_paths.append(train(i))
                 set_prompts(i)
                 i += 1
-                pbar.update()
     except KeyboardInterrupt:
         pass
     return out_paths
