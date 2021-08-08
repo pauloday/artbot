@@ -18,14 +18,12 @@ title: Abstract Landscape
 # Make a base image
 base:
   prompts: 'sunrise sunset horizon,1--ocean,2--forest,3||Dynamic'
-  iterations: 3
+  iterations: 300
   images: 1
 # try a couple of different ways to touch it up Van Gogh style
 init_image: # use base as init image
   prompts: 'sunrise sunset horizon ocean forest by Van Gogh'
   init_image: '*base'
-  iterations: 150
-  images: 5
 image_prompt: # use base as prompt
   init_image: null # make sure to reset values you don't want to carry
   image_prompts: '*base'

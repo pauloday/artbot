@@ -69,6 +69,7 @@ class BatchRunner():
                         os.makedirs(out_folder)
                     def image_name_fn(iteration):
                         return f'{out_folder}/{iteration}-{math.floor(time.time())}.jpg'
+                    print(f'Running {run_name}, saving output in {out_folder}')
                     out_paths = self.runner(parsed_run, image_name_fn, dev=0)
                     self.runs[run_name] = out_paths
                     self.run_next()
