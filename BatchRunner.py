@@ -3,6 +3,8 @@ import torch
 import math, time
 import shutil
 import ffpb
+import tqdm
+from glob import glob
 
 # Run prompts concurrently
 # For each core, try to run the top of the run list
@@ -64,12 +66,12 @@ class BatchRunner():
         os.makedirs(tmp_dir)
         i = 0
         for frame in frames:
-            shutil.copyfile(frame, f'{tmp_dir}/{str(i).zfill(4)}.jpg')
+            print(frame)
+            if os.path.exists(frame):
+                shutil.copyfile(frame, f'{tmp_dir}/{str(i).zfill(4)}.jpg')
             i += 1
         video_name = f'{self.gallery}/{math.floor(time.time())}.mp4'
 
-        # ffpb uses some fancy print stuff, so put old print back
-        __builtins__['print'] = __builtins__['oldprint']
         argv = ['-r', '20', '-f', 'image2', '-i', f'{tmp_dir}/%04d.jpg', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', video_name]
         ffpb.main(argv, tqdm=tqdm)
         shutil.rmtree(tmp_dir)
@@ -90,10 +92,15 @@ class BatchRunner():
                         return f'{out_folder}/{iteration}-{math.floor(time.time())}.jpg'
                     # check to see if the output of this run (i.e. {iteration}-.*.jpg) exists
                     # if it does, skip the run and give the user a message
-                    print(f'Running {run_name}, saving output in {out_folder}')
-                    out_paths = self.runner(parsed_run, image_name_fn, dev=0)
-                    self.make_video(out_paths)
-                    self.runs[run_name] = out_paths
+                    checkpoint = glob(f'{out_folder}/{parsed_run["iterations"]}*.jpg')
+                    if len(checkpoint) != 0:
+                        print(f'Found previous output at {checkpoint[0]}, skipping run')
+                        self.runs[run_name] = checkpoint
+                    else:
+                        print(f'Doing run "{run_name}". Saving output in {out_folder}')
+                        out_paths = self.runner(parsed_run, image_name_fn, dev=0)
+                        self.make_video(out_paths)
+                        self.runs[run_name] = out_paths
                     torch.cuda.empty_cache()
                     self.run_next()
 

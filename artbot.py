@@ -3,13 +3,15 @@ from BatchRunner import BatchRunner
 from runner import run_args
 import torch
 import shutil
+from os.path import basename
 
 def dev_count():
     return torch.cuda.device_count()
 
-# takes an input yaml str and runs it then returns a zip of the results
-def artbot(instr):
-    title, runs = parse_yaml(instr)
+# takes an input yaml file and runs it then returns a zip of the results
+def artbot(infile):
+    title, runs = parse_yaml(open(infile).read())
     batch = BatchRunner(title, runs, run_args)
     gallery = batch.run()
+    shutil.copyfile(infile, f'{gallery}/{basename(infile)}')
     return shutil.make_archive(gallery, format='zip', root_dir='Gaillery')
