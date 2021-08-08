@@ -83,7 +83,7 @@ class BatchRunner():
                 parsed_run = self.set_outputs(run)
                 if parsed_run: # this run is ready
                     if self.status_writer:
-                        self.status_writer(f'Doing run {run_name}:')
+                        self.status_writer(f'{run_name}:')
                     i_format = parsed_run['format'] if 'format' in parsed_run else 'jpg'
                     out_folder = f'{self.gallery}/{run_name}'
                     if not os.path.exists(out_folder):

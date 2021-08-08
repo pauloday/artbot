@@ -50,10 +50,11 @@ if running:
 args = {}
 st.sidebar.write('Only one template for now, more coming soon.')
 form = st.sidebar.form(key='side_form')
+title = form.text_input('Title')
 template_dict = blender.generate(form)
-submitted = form.form_submit_button('Add to config')
+submitted = form.form_submit_button('Set')
 if submitted:
-    state['yaml'] += '\n' + dump(template_dict, sort_keys=False)
+    state['yaml'] = dump({ 'title': title } + template_dict, sort_keys=False)
 def draw_editor():
     state['yaml'] = st_ace(
         value=state['yaml'],
