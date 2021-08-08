@@ -253,6 +253,9 @@ def run_args(args, image_name_fn, dev=0):
 
     pMs = []
 
+    # in a function so it can run every iteration for switching prompts
+    # optimization: actually do the math for the next switch and only run this when needed
+    # that should allow image prompt switching as well
     def set_prompts(i):
         for p in args['prompts']:
             p_str = p[0] if type(p) == tuple else p
@@ -261,22 +264,20 @@ def run_args(args, image_name_fn, dev=0):
             embed = perceptor.encode_text(clip.tokenize(txt).to(device)).float()
             pMs.append(Prompt(embed, weight, stop).to(device))
 
-        if args['image_prompts'] is not None:
-            for p in args['image_prompts']:
-                p_str = p[0] if type(p) == tuple else p
-                prompt = get_current_prompt(p, i/args['iterations']) if type(p) == list else p_str
-                path, weight, stop = parse_prompt(prompt)
-                img = resize_image(Image.open(fetch(path)).convert('RGB'), (sideX, sideY))
-                batch = make_cutouts(TF.to_tensor(img).unsqueeze(0).to(device))
-                embed = perceptor.encode_image(normalize(batch)).float()
-                pMs.append(Prompt(embed, weight, stop).to(device))
-
         for seed, weight in zip(args['noise_prompt_seeds'], args['noise_prompt_weights']):
             gen = torch.Generator().manual_seed(seed)
             embed = torch.empty([1, perceptor.visual.output_dim]).normal_(generator=gen)
             pMs.append(Prompt(embed, weight).to(device))
     set_prompts(0)
-    
+
+    # running this every iteration is too expensive, goes oom very easy
+    for prompt in args['image_prompts']:
+        path, weight, stop = parse_prompt(prompt)
+        img = resize_image(Image.open(fetch(path)).convert('RGB'), (sideX, sideY))
+        batch = make_cutouts(TF.to_tensor(img).unsqueeze(0).to(device))
+        embed = perceptor.encode_image(normalize(batch)).float()
+        pMs.append(Prompt(embed, weight, stop).to(device))
+
     def synth(z):
         z_q = vector_quantize(z.movedim(1, 3), model.quantize.embedding.weight).movedim(3, 1)
         return clamp_with_grad(model.decode(z_q).add(1).div(2), 0, 1)
