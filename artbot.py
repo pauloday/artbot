@@ -11,3 +11,6 @@ def artbot(instr):
     title, runs = parse_yaml(instr)
     batch = BatchRunner(title, runs, run_args)
     batch.run()
+
+
+artbot(open('template.yml').read())

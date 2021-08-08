@@ -23,10 +23,10 @@ class BatchRunner():
         # get the output of a prior run
         # if the run hasn't finished, return false
         def get_ref(string):
-            if '*' in string:
+            if string and '*' in string:
                     in_run = string[1:]
                     if type(self.runs[in_run]) == list:
-                        return self.runs[in_run[-1]]
+                        return self.runs[in_run][-1]
                     else:
                         return False
         # check a prompt to see if it can be run yet
@@ -38,13 +38,14 @@ class BatchRunner():
         init_image = run['init_image']
         image_prompts = run['image_prompts']
         image_prompts = image_prompts if image_prompts != None else []
-        prompt_is_ref = all(list(map(is_ref, image_prompts)))
+        prompt_is_ref = all(list(map(is_ref, image_prompts))) if image_prompts != [] else False
         init_is_ref = is_ref(init_image)
-        ref_prompt = list(map(get_ref(image_prompts)))
-        ref_init = get_ref(init_image)
         if not init_is_ref and not prompt_is_ref:
             return run
-        ret_run = False # from here we know there's at least one ref
+        ref_prompt = list(map(get_ref, image_prompts))
+        ref_init = get_ref(init_image)
+        if (prompt_is_ref and not all(ref_prompt)) or (init_is_ref and not ref_init):
+            return False # one of the refs isn't fetchable yet, no point fetching the other
         if init_is_ref and ref_init:
             run['init_image'] = ref_init
             ret_run = run
@@ -68,7 +69,7 @@ class BatchRunner():
                         os.makedirs(out_folder)
                     def image_name_fn(iteration):
                         return f'{out_folder}/{iteration}-{math.floor(time.time())}.jpg'
-                    out_paths = self.runner(parsed_run, image_name_fn)
+                    out_paths = self.runner(parsed_run, image_name_fn, dev=0)
                     self.runs[run_name] = out_paths
                     self.run_next()
 
