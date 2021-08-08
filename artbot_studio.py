@@ -101,8 +101,8 @@ else:
                 self.out_stamp = now
                 self.writer(image)
     def run_write(path, name):
+        gallery_box.write(name + ':')
         gallery_box.image(path)
-        gallery_box.write(name)
     def prog_writer(*args, **kwargs):
         return stqdm(*args, **kwargs, st_container=prog_box)
     image_writer = ImageWriter(5, image_box.image)
