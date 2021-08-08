@@ -110,9 +110,9 @@ class BatchRunner():
                             final_out = image_name_fn(run_name)
                             shutil.copyfile(out_paths[-1], final_out)
                         self.runs[run_name] = out_paths
+                        if self.run_writer:
+                            self.run_writer(final_out, run_name)
                     torch.cuda.empty_cache()
-                    if self.run_writer:
-                        self.run_writer(final_out, run_name)
                     self.run_next()
 
     def run(self):
