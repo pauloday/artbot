@@ -14,4 +14,4 @@ def artbot(infile):
     batch = BatchRunner(title, runs, run_args)
     gallery = batch.run()
     shutil.copyfile(infile, f'{gallery}/{basename(infile)}')
-    return shutil.make_archive(gallery, format='zip', root_dir='Gaillery')
+    return shutil.make_archive(title, format='zip', root_dir=gallery)
