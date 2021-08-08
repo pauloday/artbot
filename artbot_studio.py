@@ -114,8 +114,8 @@ else:
         status_writer=top_status.write,
         tqdm=prog_writer
     )
+    open(f'{batch.gallery}/{title}.yml', 'w').write(state['yaml'])
     gallery = batch.run()
-    open(f'{gallery}/{title}.yml', 'w').write(state['yaml'])
     zip_path = shutil.make_archive(title, format='zip', root_dir=gallery)
     top_status.write(f'Zipped files at {zip_path}, go download them in colab')
     state['running'] = False
