@@ -83,7 +83,7 @@ class BatchRunner():
                 parsed_run = self.set_outputs(run)
                 if parsed_run: # this run is ready
                     if self.status_writer:
-                        self.status_writer(f'Doing run "{run_name}"')
+                        self.status_writer(f'Doing run {run_name}:')
                     i_format = parsed_run['format'] if 'format' in parsed_run else 'jpg'
                     out_folder = f'{self.gallery}/{run_name}'
                     if not os.path.exists(out_folder):
@@ -96,13 +96,14 @@ class BatchRunner():
                     # check to see if the output of this run exists
                     # if it does, skip the run and give the user a message
                     checkpoint = glob(f'{out_folder}/{parsed_run["iterations"]}*.{i_format}')
+                    final_out = f'{self.gallery}/{run_name}.mp4'
                     if len(checkpoint) != 0:
                         print(f'Found output for {run_name} at {checkpoint[0]}, skipping run')
                         self.runs[run_name] = checkpoint
+                        final_out = checkpoint
                     else:
                         print(f'\nDoing run "{run_name}". Saving output in {out_folder}')
                         out_paths = self.runner(parsed_run, image_name_fn, dev=0, image_writer=self.image_writer, tqdm=self.tqdm)
-                        final_out = f'{self.gallery}/{run_name}.mp4'
                         if 'video' in run and run['video']:
                             self.make_video(run_name, out_paths)
                         else: # no video written to gallery, so put the last output there instead
@@ -110,8 +111,8 @@ class BatchRunner():
                             final_out = image_name_fn(run_name)
                             shutil.copyfile(out_paths[-1], final_out)
                         self.runs[run_name] = out_paths
-                        if self.run_writer:
-                            self.run_writer(final_out, run_name)
+                    if self.run_writer:
+                        self.run_writer(final_out, run_name)
                     torch.cuda.empty_cache()
                     self.run_next()
 

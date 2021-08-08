@@ -44,6 +44,9 @@ arg_docs = {
     'cut_pow': 'Cutout size, higher goes OOM fast',
     'seed': 'Rng seed, adjust for different versions',
 }
+running = st.sidebar.button('Run')
+if running:
+    state['running'] = running
 args = {}
 st.sidebar.write('Only one template for now, more coming soon.')
 form = st.sidebar.form(key='side_form')
@@ -54,20 +57,18 @@ if submitted:
 '''
 # Artbot Studio
 '''
-
-state['yaml'] = st_ace(
-    value=state['yaml'],
-    language='yaml',
-    tab_size='2',
-    show_gutter=True,
-    auto_update=False,
-    readonly=state['running']
-)
-running = False
+def draw_editor():
+    state['yaml'] = st_ace(
+        value=state['yaml'],
+        language='yaml',
+        tab_size='2',
+        show_gutter=True,
+        auto_update=False,
+        readonly=state['running']
+    )
 if not state['running']:
-    running = st.button('Run')
-if running:
-    state['running'] = True #elif args
+    draw_editor()
+else:
     top_status = st.empty()
     prog_box = st.container()
     image_box = st.empty()
@@ -77,10 +78,9 @@ if running:
     If the image dimensions are too high, you'll get an out of memory error.
     When this happens you'll have to go back to the Colab tab, restart the runtime, and re-run the last 2 cells.
     Otherwise you'll just run out of memory on all runs.
-
-    Run outputs:
     '''
     gallery_box = st.container()
+    draw_editor()
     # this will pipe most output from colab to streamlit
     def st_print(*args):
         strs = map(pprint.pformat, args)
@@ -119,6 +119,7 @@ if running:
     gallery = batch.run()
     zip_path = shutil.make_archive(title, format='zip', root_dir=gallery)
     top_status.write(zip_path)
+    state['running'] = False
 '''
 Welcome to Artbot! Enter a prompt to get started. The image size is tuned for Colab, but the other settings can be changes as you wish.
 `--` seperated prompts to switch midway through a run. By default it'll spend equal time on each prompt, but you can specify a ratio with `__`.
