@@ -1,4 +1,5 @@
 def generate(st):
+    st.write('Blend two prompts in various ways')
     prompt1 = st.text_input('Prompt 1')
     prompt2 = st.text_input('Prompt 2')
     return {

@@ -45,7 +45,7 @@ arg_docs = {
     'seed': 'Rng seed, adjust for different versions',
 }
 args = {}
-st.sidebar.write('Only one template for now, LMK if you think of more')
+st.sidebar.write('Only one template for now, more coming soon.')
 form = st.sidebar.form(key='side_form')
 template_dict = blender.generate(form)
 submitted = form.form_submit_button('Add to config')
