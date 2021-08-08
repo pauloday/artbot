@@ -1,12 +1,5 @@
-import sys
 import math
 import io
-from pathlib import Path
-import os
-import concurrent.futures
-import util
-
-from IPython import display
 from omegaconf import OmegaConf
 from PIL import Image
 import requests
@@ -18,10 +11,6 @@ from torchvision import transforms
 from torchvision.transforms import functional as TF
 
 from CLIP import clip
-import shutil
-import threading
-import itertools
-import time
 from tqdm import tqdm as default_tqdm
 
 

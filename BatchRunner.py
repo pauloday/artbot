@@ -11,7 +11,7 @@ from glob import glob
 # If it has unfulfilled requirements try the next one
 # don't change the order, assume user ordered it as good as possible
 class BatchRunner():
-    def __init__(self, title, runs, runner, image_writer=False, run_writer=False, tqdm=default_tqdm):
+    def __init__(self, title, runs, runner, image_writer=False, run_writer=False, tqdm=default_tqdm, status_writer=False):
         self.title = title
         # runs starts as an dict of args
         # as runs complete the output image is stored in place of run
@@ -20,6 +20,7 @@ class BatchRunner():
         self._lock = threading.Lock()
         self.image_writer = image_writer
         self.run_writer = run_writer
+        self.status_writer = status_writer
         self.tqdm = tqdm
         self.gallery = f'Gaillery/{self.title}'
         if not os.path.exists(self.gallery):
@@ -81,6 +82,8 @@ class BatchRunner():
             if type(run) == dict: # run args is dict - eventually make it class
                 parsed_run = self.set_outputs(run)
                 if parsed_run: # this run is ready
+                    if self.status_writer:
+                        self.status_writer(f'Doing run "{run_name}"')
                     i_format = parsed_run['format'] if 'format' in parsed_run else 'jpg'
                     out_folder = f'{self.gallery}/{run_name}'
                     if not os.path.exists(out_folder):
@@ -109,7 +112,7 @@ class BatchRunner():
                         self.runs[run_name] = out_paths
                     torch.cuda.empty_cache()
                     if self.run_writer:
-                        self.run_writer(final_out)
+                        self.run_writer(final_out, run_name)
                     self.run_next()
 
     def run(self):

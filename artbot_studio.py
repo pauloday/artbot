@@ -10,6 +10,7 @@ from BatchRunner import BatchRunner
 from pathlib import Path
 from runner import run_args
 import shutil
+from streamlit_ace import st_ace
 
 from yaml import dump
 
@@ -41,31 +42,30 @@ arg_docs = {
     'cut_pow': 'Cutout size, higher goes OOM fast',
     'seed': 'Rng seed, adjust for different versions',
 }
-args = {}
-form = st.sidebar.form(key='side_form')
-title = st.text_input('Title', value='Studio Run')
-run = form.text_input('Run name')
-submitted = form.form_submit_button('Add to config')
-if submitted:
-    yaml_dict = { 'title': title }
-    yaml_dict[run] = args
-    state['yaml'] = dump(yaml_dict)
-
-args['prompts'] = form.text_input(arg_docs['Prompt'])
-args['iterations'] = form.number_input(arg_docs['Iterations'], min_value=1)
-args['images_per_prompt'] = form.number_input(arg_docs['images_per_prompt'])
-args['seed'] = form.number_input(arg_docs['seed'], min_value=0)
-args['step_size'] = form.number_input(arg_docs['step_size'], min_value=0.05)
-args['cutn'] = form.number_input(arg_docs['cutn'], min_value=1, max_value=1280)
-args['size'][0] = form.number_input(arg_docs['size'], min_value=0)
-args['size'][1] = form.number_input('Height', min_value=0, value=int(args['size'][1]))
+# args = {}
+# form = st.sidebar.form(key='side_form')
+# submitted = form.form_submit_button('Add to config')
+# run = form.text_input('Run name')
+# args['prompts'] = form.text_input(arg_docs['prompts'])
+# args['iterations'] = form.number_input(arg_docs['iterations'], min_value=1, value=200)
+# args['images_per_prompt'] = form.number_input(arg_docs['images_per_prompt'], value=10)
+# args['seed'] = form.number_input(arg_docs['seed'], min_value=0)
+# args['step_size'] = form.number_input(arg_docs['step_size'], min_value=0.05)
+# args['cutn'] = form.number_input(arg_docs['cutn'], min_value=1, max_value=1280)
+# args['size'] = [680, 680]
+# args['size'][0] = form.number_input('Width', min_value=0)
+# args['size'][1] = form.number_input('Height', min_value=0)
+# if submitted:
+#     yaml_dict = {} # this order is so the title is first
+#     yaml_dict[run] = args.copy()
+#     yaml_dict['title'] = 'Studio Session'
+#     state['yaml'] = dump(yaml_dict)
 
 if not state['running']:
-    # streamlit magic command, this will be parsed as markdown
     '''
     # Artbot Studio
     '''
-    state['yaml'] = st.ace(
+    state['yaml'] = st_ace(
         value=state['yaml'],
         language='yaml',
         tab_size='2',
@@ -74,6 +74,58 @@ if not state['running']:
         readonly=False
     )
     state['running'] = st.button('Run')
+else: #elif args
+    top_status = st.empty()
+    prog_box = st.empty()
+    image_box = st.empty()
+    bot_status = st.empty()
+    '''
+    Image preview is rate limited, it will only update once every 5 seconds.
+    If the image dimensions are too high, you'll get an out of memory error.
+    When this happens you'll have to go back to the Colab tab, restart the runtime, and re-run the last 2 cells.
+    Otherwise you'll just run out of memory on all runs.
+
+    Run outputs:
+    '''
+    gallery_box = st.container()
+    # this will pipe most output from colab to streamlit
+    def st_print(*args):
+        strs = map(pprint.pformat, args)
+        bot_status.write(' '.join(strs))
+    if 'oldprint' not in __builtins__:
+        __builtins__['oldprint'] = __builtins__['print']
+    __builtins__['print'] = st_print
+    # rate as in only display a image every n seconds
+    class ImageWriter():
+        def __init__(self, rate, writer):
+            self.rate = rate
+            self.out_stamp = math.floor(time.time())
+            self.writer = writer
+        
+        def write(self, image):
+            now = math.floor(time.time())
+            if now - self.out_stamp > self.rate:
+                self.out_stamp = now
+                self.writer(image)
+    def run_write(path, name):
+        gallery_box.image(path)
+        gallery_box.write(name)
+    def prog_writer(*args):
+        return stqdm(*args, st_container=prog_box)
+    image_writer = ImageWriter(5, image_box.image)
+    title, runs = parse_yaml(state['yaml'])
+    batch = BatchRunner(
+        title,
+        runs,
+        run_args,
+        image_writer=image_writer.write,
+        run_writer=run_write,
+        status_writer=top_status.write,
+        tqdm=prog_writer
+    )
+    gallery = batch.run()
+    zip_path = shutil.make_archive(title, format='zip', root_dir=gallery)
+    top_status.write(zip_path)
     '''
     Welcome to Artbot! Enter a prompt to get started. The image size is tuned for Colab, but the other settings can be changes as you wish.
     '--' seperated prompts to switch midway through a run. By default it'll spend equal time on each prompt, but you can specify a ratio with '__'.
@@ -123,47 +175,3 @@ if not state['running']:
     - `oil painting`
     - `matte painting`
     '''
-if state['running'] and args:
-    top_status = st.empty()
-    top_status.write(f'Generating {args["prompts"]}...')
-    image_box = st.empty()
-    bot_status = st.empty()
-    gallery_box = st.container()
-    # this will pipe most output from colab to streamlit
-    def st_print(*args):
-        strs = map(pprint.pformat, args)
-        bot_status.write(' '.join(strs))
-    if 'oldprint' not in __builtins__:
-        __builtins__['oldprint'] = __builtins__['print']
-    __builtins__['print'] = st_print
-    '''
-    Image preview is rate limited, it will only update once every 5 seconds.
-    If the image dimensions are too high, you'll get an out of memory error.
-    When this happens you'll have to go back to the Colab tab, restart the runtime, and re-run the last 2 cells.
-    Otherwise you'll just run out of memory on all runs.
-    '''
-    # rate as in only display a image every n seconds
-    class ImageWriter():
-        def __init__(self, rate, writer):
-            self.rate = rate
-            self.out_stamp = math.floor(time.time())
-            self.writer = writer
-        
-        def write(self, image):
-            now = math.floor(time.time())
-            if now - self.out_stamp > self.rate:
-                self.out_stamp = now
-                self.writer(image)
-    image_writer = ImageWriter(5, image_box.image)
-    title, runs = parse_yaml(state['yaml'])
-    batch = BatchRunner(
-        title,
-        runs,
-        run_args,
-        image_writer=image_writer.write,
-        run_writer=gallery_box.image(),
-        tqdm=stqdm
-    )
-    gallery = batch.run()
-    zip_path = shutil.make_archive(title, format='zip', root_dir=gallery)
-    top_status.write(zip_path)
