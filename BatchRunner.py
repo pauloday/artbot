@@ -1,4 +1,5 @@
 import os, threading
+import torch
 import math, time
 
 # Run prompts concurrently
@@ -72,6 +73,7 @@ class BatchRunner():
                     print(f'Running {run_name}, saving output in {out_folder}')
                     out_paths = self.runner(parsed_run, image_name_fn, dev=0)
                     self.runs[run_name] = out_paths
+                    torch.cuda.empty_cache()
                     self.run_next()
 
     def run(self):

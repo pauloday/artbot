@@ -39,6 +39,6 @@ space_prompt:
   image_prompts: '*both'
 final_blend: # try mixing them all
   prompts: null
-  image_prompts: '*base||*init_image||*image_prompt||*both||*space_init||*space_prompt'
+  image_prompts: '*init_image||*image_prompt||*space_init||*space_prompt'
 final_blend_prompt:
   prompts: 'landscape'
