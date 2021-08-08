@@ -1,12 +1,5 @@
-import sys
 import math
 import io
-from pathlib import Path
-import os
-import concurrent.futures
-import util
-
-from IPython import display
 from omegaconf import OmegaConf
 from PIL import Image
 import requests
@@ -18,11 +11,7 @@ from torchvision import transforms
 from torchvision.transforms import functional as TF
 
 from CLIP import clip
-import shutil
-import threading
-import itertools
-import time
-from stqdm import stqdm
+from tqdm import tqdm as default_tqdm
 
 
 def sinc(x):
@@ -202,28 +191,7 @@ def get_current_prompt(schedule, i_pct):
             return prompt[0]
     return schedule[-1][0]
 
-# rate as in only display a image every n seconds
-class ImageWriter():
-    def __init__(self, rate, writer):
-        self.rate = rate
-        self.out_stamp = math.floor(time.time())
-        self.writer = writer
-    
-    def write(self, image):
-        now = math.floor(time.time())
-        if now - self.out_stamp > self.rate:
-            self.out_stamp = now
-            self.writer(image)
-
-
-# prompts here is a single image's prompts, not a batch of prompts
-# each prompt can be an array of tuples with ('prompt', ratio)
-# ratio is the time spent on the prompt relative to the others in the array
-# so [('space', 1), ('ocean', 1)] will do space for 50% iterations, then ocean
-def run_prompt(args, update_box, add_frame, dev=0, image_name=None,):
-    image_box = update_box.empty()
-    image_writer = ImageWriter(5, image_box.image) # hand tuned to never clobber the output with ngrok free tier
-    bottom_status = update_box.empty()
+def run_args(args, image_name_fn, dev=0, image_writer=False, tqdm=default_tqdm):
     device_name = f'cuda:{dev}'
     device = torch.device(device_name)
     print('Using device:', device, args['vqgan_checkpoint'])
@@ -261,29 +229,32 @@ def run_prompt(args, update_box, add_frame, dev=0, image_name=None,):
 
     pMs = []
 
+    # in a function so it can run every iteration for switching prompts
+    # TODO: actually do the math for the next switch and only run this when needed
+    # that should allow image prompt switching as well
     def set_prompts(i):
         for p in args['prompts']:
             p_str = p[0] if type(p) == tuple else p
             prompt = get_current_prompt(p, i/args['iterations']) if type(p) == list else p_str
-            curr_ratio_prompt = prompt
             txt, weight, stop = parse_prompt(prompt)
             embed = perceptor.encode_text(clip.tokenize(txt).to(device)).float()
             pMs.append(Prompt(embed, weight, stop).to(device))
-
-        if args['image_prompts'] is not None:
-            for prompt in args['image_prompts']:
-                path, weight, stop = parse_prompt(prompt)
-                img = resize_image(Image.open(fetch(path)).convert('RGB'), (sideX, sideY))
-                batch = make_cutouts(TF.to_tensor(img).unsqueeze(0).to(device))
-                embed = perceptor.encode_image(normalize(batch)).float()
-                pMs.append(Prompt(embed, weight, stop).to(device))
 
         for seed, weight in zip(args['noise_prompt_seeds'], args['noise_prompt_weights']):
             gen = torch.Generator().manual_seed(seed)
             embed = torch.empty([1, perceptor.visual.output_dim]).normal_(generator=gen)
             pMs.append(Prompt(embed, weight).to(device))
     set_prompts(0)
-    
+
+    # running this every iteration is too expensive, goes oom very easy
+    if args['image_prompts']:
+        for prompt in args['image_prompts']:
+            path, weight, stop = parse_prompt(prompt)
+            img = resize_image(Image.open(fetch(path)).convert('RGB'), (sideX, sideY))
+            batch = make_cutouts(TF.to_tensor(img).unsqueeze(0).to(device))
+            embed = perceptor.encode_image(normalize(batch)).float()
+            pMs.append(Prompt(embed, weight, stop).to(device))
+
     def synth(z):
         z_q = vector_quantize(z.movedim(1, 3), model.quantize.embedding.weight).movedim(3, 1)
         return clamp_with_grad(model.decode(z_q).add(1).div(2), 0, 1)
@@ -295,9 +266,8 @@ def run_prompt(args, update_box, add_frame, dev=0, image_name=None,):
         #print(f'i: {i}, loss: {sum(losses).item():g}, losses: {losses_str}')
         out = synth(z)
         TF.to_pil_image(out[0].cpu()).save(out_path)
-        image_writer.write(out_path)
-        add_frame(out_path)
-        bottom_status.write(f'Wrote {out_path}')
+        image_writer(out_path)
+        print(f'Wrote {out_path}')
 
     def ascend_txt():
         out = synth(z)
@@ -314,13 +284,10 @@ def run_prompt(args, update_box, add_frame, dev=0, image_name=None,):
         return result
 
     def train(i):
-        new_stamp = limit_stamp
         opt.zero_grad()
         lossAll = ascend_txt()
         display_freq = math.floor(args['iterations']/args['images_per_prompt'])
-        out_path = util.image_path(args, i)
-        if image_name:
-            out_path = image_name(args['prompts'], i)
+        out_path = image_name_fn(i)
         if (i % display_freq == 0 and i != 0):
             checkin(i, lossAll, out_path)
         loss = sum(lossAll)
@@ -331,15 +298,14 @@ def run_prompt(args, update_box, add_frame, dev=0, image_name=None,):
         return out_path
 
     i = 0
+    out_paths = []
     try:
-        with stqdm(total=args['iterations'] + 1, st_container=update_box) as pbar:
-            limit_stamp = math.floor(time.time())
-            displayed_images = 0
-            last_image = False
+        with tqdm(total=args['iterations']) as pbar:
             while i <= args['iterations']:
-                last_image = train(i)
+                pbar.update()
+                out_paths.append(train(i))
                 set_prompts(i)
                 i += 1
-                pbar.update()
     except KeyboardInterrupt:
         pass
+    return out_paths
