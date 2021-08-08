@@ -24,7 +24,7 @@ def init_state_field(field, state, default):
 # st.write(f'Device count: {util.dev_count()}')
 side = st.sidebar
 init_state_field('running', state, False)
-init_state_field('yaml', state, '')
+init_state_field('yaml', state, 'title: Studio Batch\n')
 
 arg_docs = {
     'prompts': 'Prompt',
@@ -50,7 +50,7 @@ form = st.sidebar.form(key='side_form')
 template_dict = blender.generate(form)
 submitted = form.form_submit_button('Add to config')
 if submitted:
-    state['yaml'].append(dump(template_dict))
+    state['yaml'] += dump(template_dict, sort_keys=False)
 '''
 # Artbot Studio
 '''
@@ -62,11 +62,13 @@ state['yaml'] = st_ace(
     auto_update=True,
     readonly=state['running']
 )
+running = False
 if not state['running']:
-    state['running'] = st.button('Run')
-else: #elif args
+    running = st.button('Run')
+if running:
+    state['running'] = True #elif args
     top_status = st.empty()
-    prog_box = st.empty()
+    prog_box = st.container()
     image_box = st.empty()
     bot_status = st.empty()
     '''
@@ -100,8 +102,8 @@ else: #elif args
     def run_write(path, name):
         gallery_box.image(path)
         gallery_box.write(name)
-    def prog_writer(*args):
-        return stqdm(*args, st_container=prog_box)
+    def prog_writer(*args, **kwargs):
+        return stqdm(*args, **kwargs, st_container=prog_box)
     image_writer = ImageWriter(5, image_box.image)
     title, runs = parse_yaml(state['yaml'])
     batch = BatchRunner(
