@@ -71,9 +71,9 @@ else:
     image_box = st.empty()
     bot_status = st.empty()
     '''
-    Image preview is rate limited, it will only update once every 5 seconds.
-    If the image dimensions are too high, you'll get an out of memory error.
-    When this happens you'll have to go back to the Colab tab, restart the runtime, and re-run the last 2 cells.
+    Image preview is rate limited, only updates every 5 seconds.
+    If image dimensions are too high, you'll get an out of memory error.
+    When this happens you'll have to go back to the Colab tab, restart the runtime and get a fresh URL.
     Otherwise you'll just run out of memory on all runs.
     '''
     gallery_box = st.container()
