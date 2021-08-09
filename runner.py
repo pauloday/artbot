@@ -288,7 +288,7 @@ def run_args(args, image_name_fn, dev=0, image_writer=False, tqdm=default_tqdm):
         lossAll = ascend_txt()
         display_freq = math.floor(args['iterations']/args['images_per_prompt'])
         out_path = image_name_fn(i)
-        if (i % display_freq == 0 and i != 0):
+        if (i % display_freq == 0 and i != 0) or i == args['iterations']:
             checkin(i, lossAll, out_path)
         loss = sum(lossAll)
         loss.backward()
