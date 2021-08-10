@@ -9,6 +9,7 @@ from torch import nn, optim
 from torch.nn import functional as F
 from torchvision import transforms
 from torchvision.transforms import functional as TF
+from time import time
 
 from CLIP import clip
 from tqdm import tqdm as default_tqdm
@@ -191,7 +192,7 @@ def get_current_prompt(schedule, i_pct):
             return prompt[0]
     return schedule[-1][0]
 
-def run_args(args, image_name_fn, dev=0, image_writer=False, tqdm=default_tqdm):
+def run_args(args, output_dir, dev=0, image_writer=False, tqdm=default_tqdm):
     device_name = f'cuda:{dev}'
     device = torch.device(device_name)
     print('Using device:', device, args['vqgan_checkpoint'])
@@ -287,7 +288,7 @@ def run_args(args, image_name_fn, dev=0, image_writer=False, tqdm=default_tqdm):
         opt.zero_grad()
         lossAll = ascend_txt()
         display_freq = math.floor(args['iterations']/args['images_per_prompt'])
-        out_path = image_name_fn(i)
+        out_path = f'{output_dir}/{i}-{args["size"]}-{math.floor(time())}.jpg'
         if (i % display_freq == 0 and i != 0) or i == args['iterations']:
             checkin(i, lossAll, out_path)
         loss = sum(lossAll)

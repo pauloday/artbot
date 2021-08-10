@@ -1,6 +1,6 @@
 #!/bin/bash
 
-git clone --quiet https://github.com/openai/CLIP
+git clone https://github.com/openai/CLIP
 git clone --quiet https://github.com/CompVis/taming-transformers
 pip install -q ftfy regex stqdm omegaconf pytorch-lightning einops transformers streamlit ffpb streamlit-ace
 pip install -q -e ./taming-transformers

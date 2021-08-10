@@ -1,10 +1,8 @@
 # A document can have any number of runs
-# Runs can use the output from prior runs as inputs for prompts and init images
-# Reference image outputs with '*name'
-# They don't have to be in order in the document, but it'll make things faster
+# Reference run outputs with '*name', this can be used in image prompts and init images
+# Runs don't have to be in order in the document, but it'll make things faster
 # Only the prompt is required. When a value is left out the last known one is used
-# So set all your values for the runs in the first one and they'll stick
-# See parse.py for allowed values and defaults
+# So set all your values like size and iteration for the runs in the first one and they'll stick
 
 # Prompt Strings:
 # The prompt and image_prompt have some special characters:
