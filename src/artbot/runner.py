@@ -189,6 +189,7 @@ def get_current_prompt(schedule, i_pct):
     for prompt in schedule:
         sched_pct += prompt[1]/ratio_sum
         if i_pct < sched_pct:
+            # figure out the iteration of the next
             return prompt[0]
     return schedule[-1][0]
 
@@ -267,8 +268,9 @@ def run_args(args, output_dir, dev=0, image_writer=False, tqdm=default_tqdm):
         #print(f'i: {i}, loss: {sum(losses).item():g}, losses: {losses_str}')
         out = synth(z)
         TF.to_pil_image(out[0].cpu()).save(out_path)
-        image_writer(out_path)
-        print(f'Wrote {out_path}')
+        if image_writer:
+            image_writer(out_path)
+        print(f'\nWrote {out_path}')
 
     def ascend_txt():
         out = synth(z)
@@ -288,7 +290,7 @@ def run_args(args, output_dir, dev=0, image_writer=False, tqdm=default_tqdm):
         opt.zero_grad()
         lossAll = ascend_txt()
         display_freq = math.floor(args['iterations']/args['images_per_prompt'])
-        out_path = f'{output_dir}/{i}-{args["size"]}-{math.floor(time())}.jpg'
+        out_path = f'{output_dir}/{i}-{args["size"][0]}x{args["size"][1]}-{math.floor(time())}.jpg'
         if (i % display_freq == 0 and i != 0) or i == args['iterations']:
             checkin(i, lossAll, out_path)
         loss = sum(lossAll)
@@ -301,10 +303,10 @@ def run_args(args, output_dir, dev=0, image_writer=False, tqdm=default_tqdm):
     i = 0
     out_paths = []
     try:
-        with tqdm(total=args['iterations'] + 1) as pbar:
-            while i <= args['iterations']:
+        with tqdm(total=args['iterations']) as pbar:
+            while i < args['iterations']:
                 pbar.update()
-                out_paths.append(train(i))
+                out_paths.append(train(i + 1)) # have i start at 1 without making pbar bigger
                 set_prompts(i)
                 i += 1
     except KeyboardInterrupt:
