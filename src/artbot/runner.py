@@ -179,7 +179,9 @@ def resize_image(image, out_size):
  
 def args_hash(args):
     dhash = md5()
-    encoded = dumps(args, sort_keys=True).encode()
+    dump_args = args.copy()
+    del dump_args['iterations'] # only arg that doesn't effect each image
+    encoded = dumps(dump_args, sort_keys=True).encode()
     dhash.update(encoded)
     return dhash.hexdigest()
 
@@ -257,14 +259,15 @@ def run_args(args, output_dir, dev=0, image_writer=False, tqdm=default_tqdm):
             txt, weight, stop = parse_prompt(prompt)
             embed = perceptor.encode_text(clip.tokenize(txt).to(device)).float()
             pMs.append(Prompt(embed, weight, stop).to(device))
-
-        for p in args['image_prompts']:
-            prompt = get_index_prompt(p, i)
-            path, weight, stop = parse_prompt(prompt)
-            img = resize_image(Image.open(fetch(path)).convert('RGB'), (sideX, sideY))
-            batch = make_cutouts(TF.to_tensor(img).unsqueeze(0).to(device))
-            embed = perceptor.encode_image(normalize(batch)).float()
-            pMs.append(Prompt(embed, weight, stop).to(device))
+        
+        if args['image_prompts']:
+            for p in args['image_prompts']:
+                prompt = get_index_prompt(p, i)
+                path, weight, stop = parse_prompt(prompt)
+                img = resize_image(Image.open(fetch(path)).convert('RGB'), (sideX, sideY))
+                batch = make_cutouts(TF.to_tensor(img).unsqueeze(0).to(device))
+                embed = perceptor.encode_image(normalize(batch)).float()
+                pMs.append(Prompt(embed, weight, stop).to(device))
 
         for seed, weight in zip(args['noise_prompt_seeds'], args['noise_prompt_weights']):
             gen = torch.Generator().manual_seed(seed)

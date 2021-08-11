@@ -5,39 +5,32 @@
 # You can stop the last value from being used by passing False for it
 # So set all your values like size and iteration for the runs in the first one and they'll stick
 
-# Prompt Strings:
-# The prompt and image_prompt can be chained with special characters:
-# a&&b: Run a and b at the same time
-# a--b: Run a, then swap it out for b
-# a++b: Run a, then run both
-# a||b: Run a, then clear all prompts and run b (same as '--' for pairs)
-# Each of these will run a and b for equal iterations, but this can be adjusted with '__':
-# a++b__2||c__3: Run a, b, and c at a 1:2:3 ratio
 title: Boiling Mountains
 # Make a base image
 base:
   size: [600, 600]
-  prompts:
-    - 'fire lava--mountain water--ocean waves'
+  prompt: 'fire lava--mountain water--ocean waves'
   iterations: 200
   images: 20
 # Try addingg James Gurney style a couple ways
 init_image: # use base as init image
-  prompts:
-    - 'by James Gurney'
-  init_image: '*base'
   iterations: 50 # init images are overwritten quickly
+  prompt: 'by James Gurney'
+  init_image: '*base'
 image_prompt: # use base as prompt
   init_image: False # make sure to reset values you don't want to carry
-  image_prompts:
-    - '*base'
+  image_prompts: '*base'
 second_pass: # smooth it out a bit maybe
-  prompts:
-    - 'lava++mountain--ocean waves'
-  image_prompts:
-    - '*init_image||*image_prompt'
   iterations: 150
+  prompt: 'lava++mountain--ocean waves'
+  image_prompts: '*init_image||*image_prompt'
 final_blend: # try mixing them all
   prompt: 'By James Gurney'
-  # you could also put these one per line, this is just more compact
-  image_prompts: '*base&&*image_prompt&&*init_image&&*second_pass'
+  # this is half the default size__ if you use all the images as prompts and full size it goes oom
+  size: [300, 300]
+  image_prompts: '*base||*image_prompt||*init_image||*second_pass'
+upscale:
+  iterations: 400
+  # scale the blend back up
+  size: [600, 600]
+  image_prompt: '*final_blend'
