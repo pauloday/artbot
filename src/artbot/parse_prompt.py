@@ -18,11 +18,12 @@ from math import floor
 # a&&b: Run a and b at the same time, they are treated as a pair for {} but not -- and __
 #   This is because they're linked in the pst-, but once they're in the prompt list the link goes away
 # You can reference other prompts and image outputs with '*':
-# (this isn't implemented in this file)
+# (image refs this aren't implemented in this file, but the token is defined here)
 # prompt, image_prompt, init_image: '*prior_run||*predefined_prompt'
 # predefined prompts are fields in the object root that only have a string
 # { title: 'Woah', neon_prompt: 'Billowing Neon Lights', neon_run: { prompt: '*neon_prompt' } }
 
+ref_tok = '*'
 ratio_reg = r'{(.+)}' # we just cast the inside as a float
 and_tok = '&&'
 # a{2} => (2, [a])
@@ -49,7 +50,8 @@ def apply_mod(mod, part, old_prompts):
         return part
     return part[0], new_prompts + part[1]
 
-# take sections, initial prompts dict, and last prompts
+# take parts, list of prompts and list of mods
+# mod and prompt list must be equal lengths
 # return if there's no sections left
 # else make new prompts with modification and recur
 def apply_mods(parts, prompts_list, mods):

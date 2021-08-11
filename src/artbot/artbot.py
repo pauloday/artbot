@@ -6,7 +6,7 @@ from runner import run_args, get_image_name
 from parse import parse_yaml
 from tqdm import tqdm
 from glob import glob
-path.append('./taming-transformers')
+
 
 # this should only be run as a script
 def is_runnable(run):
@@ -18,9 +18,9 @@ def has_output(run, out_folder):
     checkpoint = glob(f'{out_folder}/{run["iterations"]}*.jpg')
     return len(checkpoint) != 0 and checkpoint[0]
 
-def update_ref(ref, name, path):
+def update_ref(ref, name, update):
     def update_one_ref(r):
-        return path if r and r[1:] == name else r
+        return update if r and r[1:] == name else r
     def update_dict(d):
         return {i: update_one_ref(p) for i, p in d.items()}
     if type(ref) == list: # each prompt may be swap: {0: a, 50: b}
@@ -29,6 +29,11 @@ def update_ref(ref, name, path):
             ref
         ))
     return update_one_ref(ref)
+
+def update_prompt_ref(ref, runs):
+    for name, run in runs:
+        ref = update_ref(ref, name, run['prompt'])
+    return ref
 
 # returns (dir, should do run)
 # if should do run, dir is output, else dir is output image

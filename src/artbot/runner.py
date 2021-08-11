@@ -238,30 +238,22 @@ def run_args(args, output_dir, dev=0, image_writer=False, tqdm=default_tqdm):
 
     # check to see if there's any prompts to update
     def update_prompts(i):
-        update = False
-        def check_prompt(p):
-            return type(p) == dict and i in p.keys()
-        def check_prompts(ps):
-            if type(ps) == list:
-                return any(map(check_prompt, ps))
-            return check_prompt(ps)
-        update = update or check_prompts(args['prompts'])
-        if type(args['image_prompts']) == list:
-            update = update or check_prompts(args['image_prompts'])
-        if update:
-            set_prompts(i)
+        prompts = args['prompts'].get(i)
+        image_prompts = args['image_prompts'].get(i)
+        if prompts or image_prompts:
+            set_prompts(prompts, image_prompts)
 
-    def set_prompts(i):
-        #TODO: figure out how to implement prompt string tokens
-        pMs.clear()
-        for p in args['prompts']:
-            prompt = get_index_prompt(p, i)
-            txt, weight, stop = parse_prompt(prompt)
-            embed = perceptor.encode_text(clip.tokenize(txt).to(device)).float()
-            pMs.append(Prompt(embed, weight, stop).to(device))
+    def set_prompts(prompts, image_prompts):
+        pMs = []
+        if prompts:
+            for p in prompts:
+                prompt = get_index_prompt(p, i)
+                txt, weight, stop = parse_prompt(prompt)
+                embed = perceptor.encode_text(clip.tokenize(txt).to(device)).float()
+                pMs.append(Prompt(embed, weight, stop).to(device))
         
-        if args['image_prompts']:
-            for p in args['image_prompts']:
+        if image_prompts:
+            for p in image_prompts:
                 prompt = get_index_prompt(p, i)
                 path, weight, stop = parse_prompt(prompt)
                 img = resize_image(Image.open(fetch(path)).convert('RGB'), (sideX, sideY))
@@ -273,8 +265,6 @@ def run_args(args, output_dir, dev=0, image_writer=False, tqdm=default_tqdm):
             gen = torch.Generator().manual_seed(seed)
             embed = torch.empty([1, perceptor.visual.output_dim]).normal_(generator=gen)
             pMs.append(Prompt(embed, weight).to(device))
-
-    set_prompts(0)
 
     def synth(z):
         z_q = vector_quantize(z.movedim(1, 3), model.quantize.embedding.weight).movedim(3, 1)
@@ -324,8 +314,8 @@ def run_args(args, output_dir, dev=0, image_writer=False, tqdm=default_tqdm):
     try:
         with tqdm(total=args['iterations']) as pbar:
             while i < args['iterations']:
-                out_paths.append(train(i + 1)) # have i start at 1 without making pbar bigger
                 update_prompts(i)
+                out_paths.append(train(i + 1)) # have i start at 1 without making pbar bigger
                 pbar.update()
                 i += 1
     except KeyboardInterrupt:
