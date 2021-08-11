@@ -3,21 +3,15 @@ import threading, os, shutil, ffpb
 from sys import argv
 from re import search
 from torch.cuda import device_count
-from runner import run_args, get_image_name
+from runner import run_args
 from parse import parse_yaml, update_ref, update_refs, ref_reg
 from tqdm import tqdm
-from glob import glob
 from output import write_video, get_next_path
 
 def is_runnable(run):
     params = [run['init_image'], run['image_prompt']]
     has_ref = lambda r: not (r and search(ref_reg, r))
     return all(map(has_ref, params))
-
-# check if this run (size and iterations) was done already
-def has_output(run, out_folder):
-    checkpoint = glob(f'{out_folder}/{run["iterations"]}*.jpg')
-    return len(checkpoint) != 0 and checkpoint[0]
 
 # keep track of which runs we can do in a thread safe way
 class RunGetter():
@@ -55,17 +49,13 @@ class DevIndex():
             return c
 
 class Artbot():
-    def __init__(self, yaml, image_writer=False, tqdm=tqdm):
+    def __init__(self, yaml, image_writer=False, tqdm=tqdm, gallery='Gaillery'):
         title, runs = parse_yaml(yaml)
         self.getter = RunGetter(runs)
         self.index = DevIndex(device_count())
-        self.gallery = f'Gaillery/{title}'
+        self.gallery = f'{gallery}/{title}'
         self.image_writer = image_writer
-        self.test = False
-        if not os.path.exists(self.gallery):
-            os.makedirs(self.gallery)
-        with open(f'{self.gallery}/{title}.yml', 'wb') as f:
-            f.write(yaml)
+        self.tqdm = tqdm
 
     def run(self):
         threads = list()
@@ -89,14 +79,13 @@ class Artbot():
             self.getter.update_runs(run_name, output)
             for d in self.index.get_ready():
                 self.__run_dev(d)
-            self.test = 'finished'
 
     def __do_run(self, run, name, output, dev):
         print(f'Running "{name}" on device {dev}, saving output at {output}')
         self.index.toggle(dev, False)
         outputs = run_args(run, output, dev=dev, image_writer=self.image_writer, tqdm=tqdm)
         self.index.toggle(dev, True)
-        write_video(name, outputs)
+        write_video(name, outputs, self.tqdm)
         return outputs[-1]
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ from torch import nn, optim
 from torch.nn import functional as F
 from torchvision import transforms
 from torchvision.transforms import functional as TF
-from output import image_name
+from output import output_file_hashed, image_name
 
 from CLIP import clip
 from tqdm import tqdm
@@ -288,8 +288,9 @@ def run_args(args, output_dir, dev=0, image_writer=False, tqdm=tqdm):
         opt.zero_grad()
         lossAll = ascend_txt()
         display_freq = math.floor(args['iterations']/args['images_per_prompt'])
-        out_path = image_name(output_dir, i, args)
         if (i % display_freq == 0 and i != 0) or i == args['iterations']:
+            out_image= image_name(output_dir, i, args)
+            out_path = output_file_hashed(out_image)
             checkin(i, lossAll, out_path)
         loss = sum(lossAll)
         loss.backward()
