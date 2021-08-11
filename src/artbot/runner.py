@@ -238,13 +238,14 @@ def run_args(args, output_dir, dev=0, image_writer=False, tqdm=default_tqdm):
 
     # check to see if there's any prompts to update
     def update_prompts(i):
-        prompts = args['prompts'].get(i)
-        image_prompts = args['image_prompts'].get(i)
+        prompts = args['prompt'].get(i)
+        image_prompts = args['image_prompt'] and args['image_prompt'].get(i)
         if prompts or image_prompts:
+            pMs.clear()
             set_prompts(prompts, image_prompts)
 
     def set_prompts(prompts, image_prompts):
-        pMs = []
+        print('set', prompts, image_prompts)
         if prompts:
             for p in prompts:
                 prompt = get_index_prompt(p, i)

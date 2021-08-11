@@ -1,39 +1,20 @@
 #!/bin/python
 import threading, os, shutil, ffpb
-from sys import argv, path
+from sys import argv
 from torch.cuda import device_count
 from runner import run_args, get_image_name
-from parse import parse_yaml
+from parse import parse_yaml, update_ref, update_refs
 from tqdm import tqdm
 from glob import glob
 
-
-# this should only be run as a script
 def is_runnable(run):
-    params = [run['init_image'], run['image_prompts']]
+    params = [run['init_image'], run['image_prompt']]
     return all(map(lambda r: not (r and '*' in r), params))
 
 # check if this run (size and iterations) was done already
 def has_output(run, out_folder):
     checkpoint = glob(f'{out_folder}/{run["iterations"]}*.jpg')
     return len(checkpoint) != 0 and checkpoint[0]
-
-def update_ref(ref, name, update):
-    def update_one_ref(r):
-        return update if r and r[1:] == name else r
-    def update_dict(d):
-        return {i: update_one_ref(p) for i, p in d.items()}
-    if type(ref) == list: # each prompt may be swap: {0: a, 50: b}
-        return list(map(
-            lambda r: update_dict(r) if type(r) == dict else update_one_ref(r),
-            ref
-        ))
-    return update_one_ref(ref)
-
-def update_prompt_ref(ref, runs):
-    for name, run in runs:
-        ref = update_ref(ref, name, run['prompt'])
-    return ref
 
 # returns (dir, should do run)
 # if should do run, dir is output, else dir is output image
@@ -55,8 +36,11 @@ class RunGetter():
     def update_runs(self, name, path):
         with self._lock:
             for run in self.runs.values():
-                run['init_image'] = update_ref(run['init_image'], name, path)
-                run['image_prompts'] = update_ref(run['image_prompts'], name, path)
+                if run['init_image']:
+                    run['init_image'] = update_ref(run['init_image'], name, path)
+                if run['image_prompt']:
+                    print(run['image_prompt'], name, path)
+                    run['image_prompt'] = update_refs(run['image_prompt'], name, path)
     def get_next(self):
         with self._lock:
             for name in self.runs:
@@ -123,7 +107,7 @@ class Artbot():
         self.__finish_run(name, outputs)
         return outputs[-1]
 
-    #TODO: video generation elsewhere, keep Artbot small
+    #TODO: video generation elsewhere (output.py -- also handle image writing folder creation), keep Artbot small
     def __finish_run(self, name, outputs):
         tmp_dir = f'{self.gallery}/tmp'
         if os.path.exists(tmp_dir):

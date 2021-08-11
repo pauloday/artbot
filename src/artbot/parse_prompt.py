@@ -16,14 +16,9 @@ from math import floor
 #   b will be run twice as long as the others, i.e. 1:2:1:1 ratio
 # Inside each part you can run prompts concurrently with &&:
 # a&&b: Run a and b at the same time, they are treated as a pair for {} but not -- and __
-#   This is because they're linked in the pst-, but once they're in the prompt list the link goes away
-# You can reference other prompts and image outputs with '*':
-# (image refs this aren't implemented in this file, but the token is defined here)
-# prompt, image_prompt, init_image: '*prior_run||*predefined_prompt'
-# predefined prompts are fields in the object root that only have a string
-# { title: 'Woah', neon_prompt: 'Billowing Neon Lights', neon_run: { prompt: '*neon_prompt' } }
+#   This is because they're linked in the part, but once they're in the prompt list the link goes away
 
-ref_tok = '*'
+
 ratio_reg = r'{(.+)}' # we just cast the inside as a float
 and_tok = '&&'
 # a{2} => (2, [a])
@@ -97,4 +92,4 @@ def parse_prompt(prompt, iterations):
     prompts_list = apply_mods(parts, [start_part], mods)
     return prompts_to_index(prompts_list, iterations)
 
-# print(parse_prompt('a++b{2}--c__d||e&&f', 600))
+#print(parse_prompt('asimplef', 600))
