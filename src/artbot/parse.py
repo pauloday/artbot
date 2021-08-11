@@ -30,10 +30,11 @@ def get_default_args():
 # Using a prior run will replace the the prompt or image output with the value from that run
 # prompt updates happen first, image linking implemented in artbot.py
 
+ref_reg = lambda name: escape(f'[{name}]')
 # 'regular prompt except with a [ref] in it', ref, update
 # -> 'regular prompt except with a update in it'
 def update_ref(prompt, name, update):
-    return sub(escape(f'[{name}]'), update, prompt)
+    return sub(ref_reg(name), update, prompt)
 
 # update all refs inside a dict of prompt frames
 def update_refs(prompts_dict, name, update):

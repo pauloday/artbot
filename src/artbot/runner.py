@@ -1,4 +1,3 @@
-from functools import reduce
 import math
 import io
 from omegaconf import OmegaConf
@@ -10,11 +9,10 @@ from torch import nn, optim
 from torch.nn import functional as F
 from torchvision import transforms
 from torchvision.transforms import functional as TF
-from json import dumps
-from hashlib import md5
+from output import image_name
 
 from CLIP import clip
-from tqdm import tqdm as default_tqdm
+from tqdm import tqdm
 
 
 def sinc(x):
@@ -176,19 +174,8 @@ def resize_image(image, out_size):
     area = min(image.size[0] * image.size[1], out_size[0] * out_size[1])
     size = round((area * ratio)**0.5), round((area / ratio)**0.5)
     return image.resize(size, Image.LANCZOS)
- 
-def args_hash(args):
-    dhash = md5()
-    dump_args = args.copy()
-    del dump_args['iterations'] # only arg that doesn't effect each image
-    encoded = dumps(dump_args, sort_keys=True).encode()
-    dhash.update(encoded)
-    return dhash.hexdigest()
 
-def get_image_name(out_dir, i, args):
-    return f'{out_dir}/{i}_{args["size"][0]}x{args["size"][1]}_{args_hash(args)}.jpg'
-
-def run_args(args, output_dir, dev=0, image_writer=False, tqdm=default_tqdm):
+def run_args(args, output_dir, dev=0, image_writer=False, tqdm=tqdm):
     device_name = f'cuda:{dev}'
     device = torch.device(device_name)
     print('Using device:', device, args['vqgan_checkpoint'])
@@ -243,6 +230,7 @@ def run_args(args, output_dir, dev=0, image_writer=False, tqdm=default_tqdm):
         if prompts or image_prompts:
             pMs.clear()
             set_prompts(prompts, image_prompts)
+        return f'Prompts: {prompts}\nImage prompts: {image_prompts}'
 
     def set_prompts(prompts, image_prompts):
         print('set', prompts, image_prompts)
@@ -300,7 +288,7 @@ def run_args(args, output_dir, dev=0, image_writer=False, tqdm=default_tqdm):
         opt.zero_grad()
         lossAll = ascend_txt()
         display_freq = math.floor(args['iterations']/args['images_per_prompt'])
-        out_path = get_image_name(output_dir, i, args)
+        out_path = image_name(output_dir, i, args)
         if (i % display_freq == 0 and i != 0) or i == args['iterations']:
             checkin(i, lossAll, out_path)
         loss = sum(lossAll)
@@ -315,9 +303,10 @@ def run_args(args, output_dir, dev=0, image_writer=False, tqdm=default_tqdm):
     try:
         with tqdm(total=args['iterations']) as pbar:
             while i < args['iterations']:
-                update_prompts(i)
+                prompts_desc = update_prompts(i)
                 out_paths.append(train(i + 1)) # have i start at 1 without making pbar bigger
                 pbar.update()
+                pbar.set_description(prompts_desc)
                 i += 1
     except KeyboardInterrupt:
         pass

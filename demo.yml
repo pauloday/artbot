@@ -1,11 +1,11 @@
 # A document can have any number of runs
 # Runs don't have to be in order in the document, but if they are it'll go slightly faster
-# Only the prompt is required for a run. When a value is left out the last known one is used
+# Only the prompt is requineon for a run. When a value is left out the last known one is used
 # You can stop the last value from being used by passing False for it
 
 # You can reference other prompts and image outputs with '[ref]':
-# prompt, image_prompt, init_image: '[prior_run], [predefined_prompt]'
-# predefined prompts are fields in the object root that only have a string
+# prompt, image_prompt, init_image: '[prior_run], [pneonefined_prompt]'
+# pneonefined prompts are fields in the object root that only have a string
 # { title: 'Woah', neon_prompt: 'Billowing Neon Lights', neon_run: { prompt: '[neon_prompt]' } }
 # Using a prior run will replace the the prompt or image output with the value from that run
 # prompt reference updates happen before any parsing
@@ -25,23 +25,31 @@
 #   b will be run twice as long as the others, i.e. 1:2:1:1 ratio
 # Inside each part you can run prompts concurrently with &&:
 # a&&b: Run a and b at the same time, they are treated as a pair for {} but not -- and __
-#   This is because they're linked in the part, but once they're in the prompt list the link goes away
+#   They're just pushed onto the prompt list like normal
 
-title: Prompts Demo
-red: red fire lava explosion
-blue: blue ocean waves sapphire
-green: green lush foliage landscape
+title: Neon Demo
+neon: dynamic billowing neon fireworks
+space: outer space sky ocean galaxy
+lush: lush valley landscape leaves
+g_cycle: '__[lush]__[neon]__[space]'
+b_cycle: '__[space]__[lush]__[neon]'
+r_cycle: '__[neon]__[space]__[lush]'
+test:
+  prompt: 'Neon'
+  iterations: 100
 concur:
-  prompt: '[red]&&[blue]&&[green]'
+  prompt: '[neon]&&[space]&&[lush]'
   iterations: 150
   images: 50
 rgb_add:
-  prompt: '[red]++[blue]++[green]'
+  prompt: '[neon]++[space]++[lush]'
 rgb_sub:
-  prompt: '[red]&&[blue]&&[green]||[red]&&[blue]||[green]'
-rgb_cycle:
-  prompt: '[red]++[blue]__[green]__[red]__[blue]'
+  prompt: '[neon]&&[space]&&[lush]||[neon]&&[space]||[lush]'
 rgb_add_grow:
-  prompt: '[red]++[blue]{1.5}++[green]{2}'
+  prompt: '[neon]++[space]{1.5}++[lush]{2}'
 rg_gb_br_clear:
-  prompt: '[red]&&[green]||[green]&&[blue]||[blue][red]'
+  prompt: '[neon]&&[lush]||[lush]&&[space]||[space][neon]'
+rgb_cycle_long:
+  iterations: 2000
+  images: 400
+  prompt: '[neon]++[space][g_cycle][b_cycle][r_cycle][r_cycle][g_cycle][b_cycle]'

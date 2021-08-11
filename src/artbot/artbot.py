@@ -1,31 +1,23 @@
 #!/bin/python
 import threading, os, shutil, ffpb
 from sys import argv
+from re import search
 from torch.cuda import device_count
 from runner import run_args, get_image_name
-from parse import parse_yaml, update_ref, update_refs
+from parse import parse_yaml, update_ref, update_refs, ref_reg
 from tqdm import tqdm
 from glob import glob
+from output import write_video, get_next_path
 
 def is_runnable(run):
     params = [run['init_image'], run['image_prompt']]
-    return all(map(lambda r: not (r and '*' in r), params))
+    has_ref = lambda r: not (r and search(ref_reg, r))
+    return all(map(has_ref, params))
 
 # check if this run (size and iterations) was done already
 def has_output(run, out_folder):
     checkpoint = glob(f'{out_folder}/{run["iterations"]}*.jpg')
     return len(checkpoint) != 0 and checkpoint[0]
-
-# returns (dir, should do run)
-# if should do run, dir is output, else dir is output image
-def get_next_path(name, gallery, run):
-    out_dir = f'{gallery}/{name}'
-    out_path = get_image_name(out_dir, run['iterations'], run)
-    if os.path.exists(out_path):
-        return out_path, False
-    if not os.path.exists(out_dir):
-        os.makedirs(out_dir)
-    return out_dir, True
 
 # keep track of which runs we can do in a thread safe way
 class RunGetter():
@@ -63,7 +55,7 @@ class DevIndex():
             return c
 
 class Artbot():
-    def __init__(self, yaml, image_writer=False):
+    def __init__(self, yaml, image_writer=False, tqdm=tqdm):
         title, runs = parse_yaml(yaml)
         self.getter = RunGetter(runs)
         self.index = DevIndex(device_count())
@@ -102,29 +94,10 @@ class Artbot():
     def __do_run(self, run, name, output, dev):
         print(f'Running "{name}" on device {dev}, saving output at {output}')
         self.index.toggle(dev, False)
-        outputs = run_args(run, output, dev=dev, image_writer=self.image_writer)
+        outputs = run_args(run, output, dev=dev, image_writer=self.image_writer, tqdm=tqdm)
         self.index.toggle(dev, True)
-        self.__finish_run(name, outputs)
+        write_video(name, outputs)
         return outputs[-1]
-
-    #TODO: video generation elsewhere (output.py -- also handle image writing folder creation), keep Artbot small
-    def __finish_run(self, name, outputs):
-        tmp_dir = f'{self.gallery}/tmp'
-        if os.path.exists(tmp_dir):
-            shutil.rmtree(tmp_dir)
-        os.makedirs(tmp_dir)
-        i = 0
-        for frame in outputs:
-            if os.path.exists(frame):
-                shutil.copyfile(frame, f'{tmp_dir}/{str(i).zfill(4)}.jpg')
-                i += 1
-        video_name = f'{self.gallery}/{name}.mp4'
-        argv = ['-r', '24', '-f', 'image2', '-i', f'{tmp_dir}/%04d.jpg', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-y', video_name]
-        ffpb.main(argv, tqdm=tqdm)
-        shutil.rmtree(tmp_dir)
-        if self.image_writer:
-                self.image_writer(video_name, video=True)
-        return video_name
 
 if __name__ == "__main__":
     in_dict = parse_yaml(open(argv[0]).read())
