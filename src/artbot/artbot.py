@@ -9,8 +9,11 @@ from tqdm import tqdm
 from output import obj_hash, output_file_postfix, write_video, get_next_path
 
 def is_runnable(run):
-    params = [run['init_image'], run['image_prompt']]
+    params = [run['init_image']]
     has_ref = lambda r: not (r and search(ref_reg('.+'), r))
+    if run['image_prompt']:
+        for prompt in list(run['image_prompt'].values()):
+            params += prompt
     return all(map(has_ref, params))
 
 # keep track of which runs we can do in a thread safe way
@@ -48,16 +51,17 @@ class DevIndex():
             return c
 
 class Artbot():
-    def __init__(self, yaml, image_writer=False, tqdm=tqdm, gallery='Gaillery'):
+    def __init__(self, yaml, image_writer=False, status_writer=False, tqdm=tqdm, gallery='Gaillery'):
         title, runs = parse_yaml(yaml)
         self.getter = RunGetter(runs)
         self.index = DevIndex(device_count())
         self.gallery = f'{gallery}/{title}'
         self.image_writer = image_writer
+        self.status_writer = status_writer
         self.tqdm = tqdm
-        conf_hash = obj_hash((title, runs))
-        conf_path = output_file_postfix(f'{self.gallery}/{title}.yml', conf_hash)
-        open(conf_path, 'w').write(yaml)
+        conf_hash = obj_hash([title, runs])
+        conf_path = output_file_postfix(f'{self.gallery}/{title}.txt', conf_hash)
+        open(conf_path, 'wb').write(yaml)
 
     def run(self):
         threads = list()
@@ -85,7 +89,7 @@ class Artbot():
     def __do_run(self, run, name, output, dev):
         print(f'Running "{name}" on device {dev}, saving output at {output}')
         self.index.toggle(dev, False)
-        outputs = run_args(run, output, dev=dev, image_writer=self.image_writer, tqdm=self.tqdm)
+        outputs = run_args(run, output, dev=dev, image_writer=self.image_writer, status_writer=self.status_writer, tqdm=self.tqdm)
         self.index.toggle(dev, True)
         write_video(self.gallery, name, outputs, tqdm=self.tqdm)
         return outputs[-1]

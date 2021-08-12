@@ -9,7 +9,7 @@ from torch import nn, optim
 from torch.nn import functional as F
 from torchvision import transforms
 from torchvision.transforms import functional as TF
-from output import output_file_postfix, image_name, runs_hash
+from output import obj_hash, output_file_postfix, image_name
 
 from CLIP import clip
 from tqdm import tqdm
@@ -175,7 +175,7 @@ def resize_image(image, out_size):
     size = round((area * ratio)**0.5), round((area / ratio)**0.5)
     return image.resize(size, Image.LANCZOS)
 
-def run_args(args, output_dir, dev=0, image_writer=False, tqdm=tqdm):
+def run_args(args, output_dir, dev=0, image_writer=False, status_writer=False, tqdm=tqdm):
     device_name = f'cuda:{dev}'
     device = torch.device(device_name)
     print('Using device:', device, args['vqgan_checkpoint'])
@@ -231,7 +231,7 @@ def run_args(args, output_dir, dev=0, image_writer=False, tqdm=tqdm):
         if prompts or image_prompts:
             pMs.clear()
             set_prompts(prompts, image_prompts)
-            current_prompts.append(f'Prompts: {prompts}\nImage Prompts: {image_prompts}')
+            current_prompts.append(f'Prompts: {prompts}; Image Prompts: {image_prompts}')
 
     def set_prompts(prompts, image_prompts):
         if prompts:
@@ -266,9 +266,7 @@ def run_args(args, output_dir, dev=0, image_writer=False, tqdm=tqdm):
         #print(f'i: {i}, loss: {sum(losses).item():g}, losses: {losses_str}')
         out = synth(z)
         TF.to_pil_image(out[0].cpu()).save(out_path)
-        if image_writer:
-            image_writer(out_path)
-        print(f'\nWrote {out_path}\n{current_prompts[-1]}')
+        return f'{current_prompts[-1]};{out_path}'
 
     def ascend_txt():
         out = synth(z)
@@ -278,25 +276,25 @@ def run_args(args, output_dir, dev=0, image_writer=False, tqdm=tqdm):
             result.append(F.mse_loss(z, z_orig) * args['init_weight'] / 2)
         for prompt in pMs:
             result.append(prompt(iii))
-
         return result
 
-    def train(i, pbar):
+    def train(i):
+        status = False
         opt.zero_grad()
         lossAll = ascend_txt()
         display_freq = math.floor(args['iterations']/args['images_per_prompt'])
         out_path = False
         if (i % display_freq == 0 and i != 0) or i == args['iterations']:
-            out_image  = image_name(output_dir, i, args)
-            out_path = output_file_postfix(out_image, runs_hash(args))
-            pbar.set_description(checkin(lossAll, out_path), refresh=False)
+            out_path  = image_name(output_dir, i, args)
+            status = checkin(lossAll, out_path)
         loss = sum(lossAll)
         loss.backward()
         opt.step()
         with torch.no_grad():
             z.copy_(z.maximum(z_min).minimum(z_max))
         if out_path:
-            return out_path
+            return out_path, status
+        return False, status
 
     i = 0
     out_paths = []
@@ -304,11 +302,17 @@ def run_args(args, output_dir, dev=0, image_writer=False, tqdm=tqdm):
         with tqdm(total=args['iterations']) as pbar:
             while i < args['iterations']:
                 update_prompts(i)
-                path = train(i + 1, pbar) # have i start at 1 without making pbar bigger
+                path, status = train(i + 1) # have i start at 1 without making pbar bigger
                 if path:
                     out_paths.append(path)
+                    if image_writer:
+                        image_writer(path)
                 pbar.update()
+                if status and status_writer:
+                    status_writer(status)
                 i += 1
     except KeyboardInterrupt:
         pass
+    if status_writer:
+        status_writer(False) #this means we're done, clean up
     return out_paths

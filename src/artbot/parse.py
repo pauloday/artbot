@@ -105,6 +105,8 @@ def parse_yaml(yaml):
     runs = deref_prompts(runs, pre_prompts)
     for name, r in runs.items():
         runs[name]['prompt'] = parse_prompt(r['prompt'], r['iterations'])
+        if runs[name]['image_prompt']:
+            runs[name]['image_prompt'] = parse_prompt(r['image_prompt'], r['iterations'])
     return title, runs
 
 # print(parse_yaml(open('demo.yml').read()))

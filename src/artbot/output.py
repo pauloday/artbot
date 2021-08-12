@@ -12,21 +12,14 @@ def str_hash(string):
     return dhash.hexdigest()
 
 def obj_hash(obj):
-    str_hash(str(obj).encode('utf-8'))
-
-def runs_hash(args):
-    dump_args = args.copy()
-    del dump_args['iterations'] # only arg that doesn't effect each image
-    encoded = dumps(dump_args, sort_keys=True).encode()
+    encoded = dumps(obj, sort_keys=True).encode()
     return str_hash(encoded)
 
-def image_name(out_dir, i, args):
-    return f'{out_dir}/{i}_{args["size"][0]}x{args["size"][1]}.jpg'
-
-# check if this run (size and iterations) was done already
-def has_output(run, out_folder):
-    checkpoint = glob(f'{out_folder}/{run["iterations"]}*.jpg')
-    return len(checkpoint) != 0 and checkpoint[0]
+def image_name(out_dir, i, run):
+    image_name = f'{out_dir}/{i}_{run["size"][0]}x{run["size"][1]}.jpg'
+    dump_args = run.copy();
+    del dump_args['iterations'] # only arg that doesn't effect each image
+    return output_file_postfix(image_name, obj_hash(dump_args))
 
 # output a file path with a hash of something included, and create any parent dirs
 def output_file_postfix(path, postfix):
@@ -58,13 +51,14 @@ def write_video(out_dir, name, outputs, tqdm=tqdm):
         shutil.rmtree(tmp_dir)
     os.makedirs(tmp_dir)
     i = 0
-    for frame in outputs:
-        if os.path.exists(frame):
-            shutil.copyfile(frame, f'{tmp_dir}/{str(i).zfill(4)}.jpg')
-            i += 1
+    print(outputs)
+    for frame in outputs:    
+        print(frame)        
+        shutil.copyfile(frame, f'{tmp_dir}/{str(i).zfill(5)}.jpg')
+        i += 1
     video_file = f'{out_dir}/{name}.mp4'
     vid_path = output_file_postfix(video_file, obj_hash(outputs))
-    argv = ['-r', '24', '-f', 'image2', '-i', f'{tmp_dir}/%04d.jpg', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-y', vid_path]
+    argv = ['-r', '24', '-f', 'image2', '-i', f'{tmp_dir}/%05d.jpg', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-y', vid_path]
     ffpb.main(argv, tqdm=tqdm)
     shutil.rmtree(tmp_dir)
     return vid_path
