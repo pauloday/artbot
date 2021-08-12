@@ -87,6 +87,8 @@ class Artbot():
                 self.__run_dev(d)
 
     def __do_run(self, run, name, output, dev):
+        if self.status_writer:
+            self.status_writer(False) # this means clear the screen
         print(f'Running "{name}" on device {dev}, saving output at {output}')
         self.index.toggle(dev, False)
         outputs = run_args(run, output, dev=dev, image_writer=self.image_writer, status_writer=self.status_writer, tqdm=self.tqdm)

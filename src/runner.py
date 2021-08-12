@@ -266,7 +266,7 @@ def run_args(args, output_dir, dev=0, image_writer=False, status_writer=False, t
         #print(f'i: {i}, loss: {sum(losses).item():g}, losses: {losses_str}')
         out = synth(z)
         TF.to_pil_image(out[0].cpu()).save(out_path)
-        return f'{current_prompts[-1]};{out_path}'
+        return f'{current_prompts[-1]}; {out_path}'
 
     def ascend_txt():
         out = synth(z)
@@ -313,6 +313,4 @@ def run_args(args, output_dir, dev=0, image_writer=False, status_writer=False, t
                 i += 1
     except KeyboardInterrupt:
         pass
-    if status_writer:
-        status_writer(False) #this means we're done, clean up
     return out_paths

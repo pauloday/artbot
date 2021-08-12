@@ -51,10 +51,9 @@ def write_video(out_dir, name, outputs, tqdm=tqdm):
         shutil.rmtree(tmp_dir)
     os.makedirs(tmp_dir)
     i = 0
-    print(outputs)
-    for frame in outputs:    
-        print(frame)        
-        shutil.copyfile(frame, f'{tmp_dir}/{str(i).zfill(5)}.jpg')
+    for frame in outputs:
+        f = f'{tmp_dir}/{str(i).zfill(5)}.jpg'
+        shutil.copyfile(frame, f)
         i += 1
     video_file = f'{out_dir}/{name}.mp4'
     vid_path = output_file_postfix(video_file, obj_hash(outputs))
