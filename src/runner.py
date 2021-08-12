@@ -231,7 +231,7 @@ def run_args(args, output_dir, dev=0, image_writer=False, status_writer=False, t
         if prompts or image_prompts:
             pMs.clear()
             set_prompts(prompts, image_prompts)
-            current_prompts.append(f'Prompts: {prompts}; Image Prompts: {image_prompts}')
+            current_prompts.append(f'**Prompts:** {prompts}<br>**Image Prompts:** {image_prompts}')
 
     def set_prompts(prompts, image_prompts):
         if prompts:
@@ -266,7 +266,7 @@ def run_args(args, output_dir, dev=0, image_writer=False, status_writer=False, t
         #print(f'i: {i}, loss: {sum(losses).item():g}, losses: {losses_str}')
         out = synth(z)
         TF.to_pil_image(out[0].cpu()).save(out_path)
-        return f'{current_prompts[-1]}; {out_path}'
+        return f'{current_prompts[-1]}<br>**Output:** {out_path}'
 
     def ascend_txt():
         out = synth(z)
@@ -309,6 +309,8 @@ def run_args(args, output_dir, dev=0, image_writer=False, status_writer=False, t
                         image_writer(path)
                 pbar.update()
                 if status and status_writer:
+                    #TODO restructure status so omitting image prompt is ez
+                    status = f'{status}<br>**All prompts:** {args["prompt"]}<br>**All image prompts:** {args["image_prompt"]}'
                     status_writer(status)
                 i += 1
     except KeyboardInterrupt:

@@ -50,6 +50,8 @@ class DevIndex():
             c = list(filter(lambda e: self.devs[e], self.devs))
             return c
 
+# TODO: pass in a config writer that displays pretty yaml for each run
+# it'll be read only and show the direct text from the file (this is ???)
 class Artbot():
     def __init__(self, yaml, image_writer=False, status_writer=False, tqdm=tqdm, gallery='Gaillery'):
         title, runs = parse_yaml(yaml)

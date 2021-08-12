@@ -53,11 +53,16 @@ def update_prompt_ref(prompt, runs, pre_prompts):
     return prompt
 
 def deref_prompts(runs, pre_prompts):
-    for name in runs:
-        prompt = runs[name]['prompt']
+    def update_name(name, parent):
+        prompt = parent[name]['prompt']
         derefed = update_prompt_ref(prompt, runs, pre_prompts)
-        runs[name]['prompt'] = derefed
-    return runs
+        parent[name]['prompt'] = derefed
+    #todo: use a real parser generator + grammer
+    for name in pre_prompts:
+        update_name(name, pre_prompts)
+    for name in runs:
+        update_name(name, runs)
+    return runs, pre_prompts
 
 # iterate over the keys
 # for each key, parse into an args dictionary
@@ -102,7 +107,7 @@ def parse_yaml(yaml):
                 args[arg] = new_args[arg]
         runs[section_name] = args.copy()
     # update all of the prompt references
-    runs = deref_prompts(runs, pre_prompts)
+    runs, pre_prompts = deref_prompts(runs, pre_prompts)
     for name, r in runs.items():
         runs[name]['prompt'] = parse_prompt(r['prompt'], r['iterations'])
         if runs[name]['image_prompt']:
