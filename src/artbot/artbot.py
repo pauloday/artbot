@@ -6,11 +6,11 @@ from torch.cuda import device_count
 from runner import run_args
 from parse import parse_yaml, update_ref, update_refs, ref_reg
 from tqdm import tqdm
-from output import write_video, get_next_path
+from output import obj_hash, output_file_postfix, write_video, get_next_path
 
 def is_runnable(run):
     params = [run['init_image'], run['image_prompt']]
-    has_ref = lambda r: not (r and search(ref_reg, r))
+    has_ref = lambda r: not (r and search(ref_reg('.+'), r))
     return all(map(has_ref, params))
 
 # keep track of which runs we can do in a thread safe way
@@ -25,7 +25,6 @@ class RunGetter():
                 if run['init_image']:
                     run['init_image'] = update_ref(run['init_image'], name, path)
                 if run['image_prompt']:
-                    print(run['image_prompt'], name, path)
                     run['image_prompt'] = update_refs(run['image_prompt'], name, path)
     def get_next(self):
         with self._lock:
@@ -56,6 +55,9 @@ class Artbot():
         self.gallery = f'{gallery}/{title}'
         self.image_writer = image_writer
         self.tqdm = tqdm
+        conf_hash = obj_hash((title, runs))
+        conf_path = output_file_postfix(f'{self.gallery}/{title}.yml', conf_hash)
+        open(conf_path, 'w').write(yaml)
 
     def run(self):
         threads = list()
@@ -83,9 +85,9 @@ class Artbot():
     def __do_run(self, run, name, output, dev):
         print(f'Running "{name}" on device {dev}, saving output at {output}')
         self.index.toggle(dev, False)
-        outputs = run_args(run, output, dev=dev, image_writer=self.image_writer, tqdm=tqdm)
+        outputs = run_args(run, output, dev=dev, image_writer=self.image_writer, tqdm=self.tqdm)
         self.index.toggle(dev, True)
-        write_video(name, outputs, self.tqdm)
+        write_video(self.gallery, name, outputs, tqdm=self.tqdm)
         return outputs[-1]
 
 if __name__ == "__main__":

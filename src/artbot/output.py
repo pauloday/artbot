@@ -11,6 +11,9 @@ def str_hash(string):
     dhash.update(string)
     return dhash.hexdigest()
 
+def obj_hash(obj):
+    str_hash(str(obj).encode('utf-8'))
+
 def runs_hash(args):
     dump_args = args.copy()
     del dump_args['iterations'] # only arg that doesn't effect each image
@@ -26,14 +29,13 @@ def has_output(run, out_folder):
     return len(checkpoint) != 0 and checkpoint[0]
 
 # output a file path with a hash of something included, and create any parent dirs
-def output_file_hashed(path, content):
+def output_file_postfix(path, postfix):
     path = Path(path)
     parent = path.parent.absolute()
-    postfix = str_hash(content)
     if not os.path.exists(parent):
             os.makedirs(parent)
     fil, ext = os.path.splitext(path)
-    outpath = f'{fil}-{postfix}.{ext}'
+    outpath = f'{fil}-{postfix}{ext}'
     return outpath
 
 # returns (dir, should do run)
@@ -61,7 +63,7 @@ def write_video(out_dir, name, outputs, tqdm=tqdm):
             shutil.copyfile(frame, f'{tmp_dir}/{str(i).zfill(4)}.jpg')
             i += 1
     video_file = f'{out_dir}/{name}.mp4'
-    vid_path = output_file_hashed(video_file, str(outputs))
+    vid_path = output_file_postfix(video_file, obj_hash(outputs))
     argv = ['-r', '24', '-f', 'image2', '-i', f'{tmp_dir}/%04d.jpg', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-y', vid_path]
     ffpb.main(argv, tqdm=tqdm)
     shutil.rmtree(tmp_dir)

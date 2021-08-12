@@ -9,7 +9,7 @@ from torch import nn, optim
 from torch.nn import functional as F
 from torchvision import transforms
 from torchvision.transforms import functional as TF
-from output import output_file_hashed, image_name
+from output import output_file_postfix, image_name, runs_hash
 
 from CLIP import clip
 from tqdm import tqdm
@@ -223,6 +223,7 @@ def run_args(args, output_dir, dev=0, image_writer=False, tqdm=tqdm):
                 return False
         return prompt
 
+    current_prompts = []
     # check to see if there's any prompts to update
     def update_prompts(i):
         prompts = args['prompt'].get(i)
@@ -230,10 +231,9 @@ def run_args(args, output_dir, dev=0, image_writer=False, tqdm=tqdm):
         if prompts or image_prompts:
             pMs.clear()
             set_prompts(prompts, image_prompts)
-        return f'Prompts: {prompts}\nImage prompts: {image_prompts}'
+            current_prompts.append(f'Prompts: {prompts}\nImage Prompts: {image_prompts}')
 
     def set_prompts(prompts, image_prompts):
-        print('set', prompts, image_prompts)
         if prompts:
             for p in prompts:
                 prompt = get_index_prompt(p, i)
@@ -260,7 +260,7 @@ def run_args(args, output_dir, dev=0, image_writer=False, tqdm=tqdm):
         return clamp_with_grad(model.decode(z_q).add(1).div(2), 0, 1)
 
     @torch.no_grad()
-    def checkin(i, losses, out_path):
+    def checkin(losses, out_path):
         losses_str = ', '.join(f'{loss.item():g}' for loss in losses)
         # this is some math thing I don't want to get rid of, but it takes a lot of space for bigger runs
         #print(f'i: {i}, loss: {sum(losses).item():g}, losses: {losses_str}')
@@ -268,46 +268,46 @@ def run_args(args, output_dir, dev=0, image_writer=False, tqdm=tqdm):
         TF.to_pil_image(out[0].cpu()).save(out_path)
         if image_writer:
             image_writer(out_path)
-        print(f'\nWrote {out_path}')
+        print(f'\nWrote {out_path}\n{current_prompts[-1]}')
 
     def ascend_txt():
         out = synth(z)
         iii = perceptor.encode_image(normalize(make_cutouts(out))).float()
-
         result = []
-
         if args['init_weight']:
             result.append(F.mse_loss(z, z_orig) * args['init_weight'] / 2)
-
         for prompt in pMs:
             result.append(prompt(iii))
 
         return result
 
-    def train(i):
+    def train(i, pbar):
         opt.zero_grad()
         lossAll = ascend_txt()
         display_freq = math.floor(args['iterations']/args['images_per_prompt'])
+        out_path = False
         if (i % display_freq == 0 and i != 0) or i == args['iterations']:
-            out_image= image_name(output_dir, i, args)
-            out_path = output_file_hashed(out_image)
-            checkin(i, lossAll, out_path)
+            out_image  = image_name(output_dir, i, args)
+            out_path = output_file_postfix(out_image, runs_hash(args))
+            pbar.set_description(checkin(lossAll, out_path), refresh=False)
         loss = sum(lossAll)
         loss.backward()
         opt.step()
         with torch.no_grad():
             z.copy_(z.maximum(z_min).minimum(z_max))
-        return out_path
+        if out_path:
+            return out_path
 
     i = 0
     out_paths = []
     try:
         with tqdm(total=args['iterations']) as pbar:
             while i < args['iterations']:
-                prompts_desc = update_prompts(i)
-                out_paths.append(train(i + 1)) # have i start at 1 without making pbar bigger
+                update_prompts(i)
+                path = train(i + 1, pbar) # have i start at 1 without making pbar bigger
+                if path:
+                    out_paths.append(path)
                 pbar.update()
-                pbar.set_description(prompts_desc)
                 i += 1
     except KeyboardInterrupt:
         pass
