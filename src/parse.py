@@ -7,8 +7,8 @@ def get_default_args():
     return {
         'prompt': [],
         'image_prompt': None,
-        'iterations': 300,
-        'images_per_prompt': 10,
+        'iterations': 200,
+        'images_per_prompt': 60,
         'noise_prompt_seeds': [],
         'noise_prompt_weights': [],
         'size': [1000, 500],
@@ -105,6 +105,8 @@ def parse_yaml(yaml):
         for arg in args:
             if new_args[arg]:
                 args[arg] = new_args[arg]
+            elif new_args[arg] == False:
+                args[arg] = get_default_args()[arg]
         runs[section_name] = args.copy()
     # update all of the prompt references
     runs, pre_prompts = deref_prompts(runs, pre_prompts)

@@ -9,7 +9,7 @@ from torch import nn, optim
 from torch.nn import functional as F
 from torchvision import transforms
 from torchvision.transforms import functional as TF
-from output import obj_hash, output_file_postfix, image_name
+from output import image_name
 
 from CLIP import clip
 from tqdm import tqdm
