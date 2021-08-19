@@ -306,12 +306,12 @@ def run_args(args, output_dir, dev=0, image_writer=False, status_writer=False, t
                 if path:
                     out_paths.append(path)
                     if image_writer:
-                        image_writer(path)
+                        image_writer(path, dev)
                 pbar.update()
                 if status and status_writer:
                     #TODO restructure status so omitting image prompt is ez
                     status = f'{status}<br>**All prompts:** {args["prompt"]}<br>**All image prompts:** {args["image_prompt"]}'
-                    status_writer(status)
+                    status_writer(status, dev)
                 i += 1
     except KeyboardInterrupt:
         pass

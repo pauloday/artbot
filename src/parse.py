@@ -21,6 +21,7 @@ def get_default_args():
         'cutn': 64,
         'cut_pow': 1.,
         'seed': 0,
+        'video': True
     }
 
 # You can reference other prompts and image outputs with '[ref]':
@@ -82,6 +83,7 @@ def parse_yaml(yaml):
             run['prompt'] = prompt
         new_args = {
             #TODO: refactor this to be less awkward?
+            # combine with defaults and put into function
             'prompt': run.get('prompt'),
             'image_prompt': run.get('image_prompt'),
             'iterations': run.get('iterations'),
@@ -97,7 +99,8 @@ def parse_yaml(yaml):
             'step_size': run.get('step_size'),
             'cutn': run.get('cutn'),
             'cut_pow': run.get('cut_pow'),
-            'seed': run.get('seed')
+            'seed': run.get('seed'),
+            'video': run.get('video')
         }
         # only set the ones that actually were set
         # this is how the carry over feature is implemented

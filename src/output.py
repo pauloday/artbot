@@ -18,7 +18,9 @@ def obj_hash(obj):
 def image_name(out_dir, i, run):
     image_name = f'{out_dir}/{i}_{run["size"][0]}x{run["size"][1]}.jpg'
     dump_args = run.copy();
-    del dump_args['iterations'] # only arg that doesn't effect each image
+    # these args shouldn't ever change individual images when modified
+    del dump_args['iterations']
+    del dump_args['video']
     return output_file_postfix(image_name, obj_hash(dump_args))
 
 # output a file path with a hash of something included, and create any parent dirs
@@ -46,7 +48,7 @@ def get_next_path(name, gallery, run):
 # use the str hash function
 # with the list of filenames (dir not included) as hash
 def write_video(out_dir, name, outputs, tqdm=tqdm):
-    tmp_dir = f'{out_dir}/tmp'
+    tmp_dir = f'{out_dir}/tmp-{name}'
     if os.path.exists(tmp_dir):
         shutil.rmtree(tmp_dir)
     os.makedirs(tmp_dir)
