@@ -8,7 +8,7 @@ def get_default_args():
         'prompt': [],
         'image_prompt': None,
         'iterations': 200,
-        'images_per_prompt': 60,
+        'images_per_prompt': 30,
         'noise_prompt_seeds': [],
         'noise_prompt_weights': [],
         'size': [1000, 500],
@@ -43,26 +43,23 @@ def update_refs(prompts_dict, name, update):
         prompts_dict[i] = list(map(up_ref, prompts))
     return prompts_dict
 
-# updates a prompt using a set of runs/pre_prompts
-# both run and pre_prompt are dicts of dicts with a 'prompt' key
+# updates a prompt using a set of runs
+# run is a dict of dicts with a 'prompt' key
 # the prompt is a string, this is run before parse_prompt
-def update_prompt_ref(prompt, runs, pre_prompts):
-    combo_prompts = {**runs, **pre_prompts}
-    for name, ref_dict in combo_prompts.items():
-        prompt = update_ref(prompt, name, ref_dict['prompt'])
+def update_prompt_ref(prompt, runs):
+    for name, run in runs.items():
+        prompt = update_ref(prompt, name, run['prompt'])
     return prompt
 
-def deref_prompts(runs, pre_prompts):
+def deref_prompts(runs):
     def update_name(name, parent):
         prompt = parent[name]['prompt']
-        derefed = update_prompt_ref(prompt, runs, pre_prompts)
+        derefed = update_prompt_ref(prompt, runs)
         parent[name]['prompt'] = derefed
     #todo: use a real parser generator + grammer
-    for name in pre_prompts:
-        update_name(name, pre_prompts)
     for name in runs:
         update_name(name, runs)
-    return runs, pre_prompts
+    return runs
 
 # iterate over the keys
 # for each key, parse into an args dictionary
@@ -72,16 +69,19 @@ def parse_yaml(yaml):
     runs = {}
     args = get_default_args()
     title = parsed['title']
-    pre_prompts = {}
     del parsed['title']
-    for section_name in parsed: # will be either run (dict), or prompt (str)
+    # section_names will be for one of:
+    # run (dict)
+    # solo prompt run (str)
+    for section_name in parsed:
         run = parsed[section_name]
-        if type(run) == str: # actually a prompt, mimic run structure for ease
-            pre_prompts[section_name] = {'prompt': run}
-            continue
-        # try to set all the values
+        # implement "title: prompt" shorthand
+        if type(run) == str:
+            prompt = run
+            run = args.copy()
+            run['prompt'] = prompt
         new_args = {
-            #TODO: refactor this to be less awkward
+            #TODO: refactor this to be less awkward?
             'prompt': run.get('prompt'),
             'image_prompt': run.get('image_prompt'),
             'iterations': run.get('iterations'),
@@ -109,7 +109,7 @@ def parse_yaml(yaml):
                 args[arg] = get_default_args()[arg]
         runs[section_name] = args.copy()
     # update all of the prompt references
-    runs, pre_prompts = deref_prompts(runs, pre_prompts)
+    runs = deref_prompts(runs)
     for name, r in runs.items():
         runs[name]['prompt'] = parse_prompt(r['prompt'], r['iterations'])
         if runs[name]['image_prompt']:
