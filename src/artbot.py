@@ -95,7 +95,7 @@ class Artbot():
         self.index.toggle(dev, False)
         outputs = run_args(run, output, dev=dev, image_writer=self.image_writer, status_writer=self.status_writer, tqdm=self.tqdm)
         self.index.toggle(dev, True)
-        if run.get('video'):
+        if 'video' in run.keys() and run['video']:
             write_video(self.gallery, name, outputs, tqdm=self.tqdm)
         return outputs[-1]
 
