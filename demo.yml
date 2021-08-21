@@ -56,6 +56,7 @@ bigcycle_prompt:
   # l -> n -> s&s -> s&l -> s&n -> n&n -> n&s -> n&l -> l&l -> l&n -> l&s
   prompt: '[a_cycle]&&[b_cycle]__[c_cycle]__[a_cycle]'
 chess_neon:
+  video: False # Videos are kind of big, avoid writing them unless you specifically want to
   # by default it starts drawing on random noise
   # you can also pass in an initial image for it to start drawing on
   # the image will be stretched to size, for init image and image prompt
