@@ -41,9 +41,14 @@ bigcycle_image_prompt:
   iterations: 600
   images: 400
   video: True # use the images as frames for video. Video will be in the main folder, not the run folder
-  image_prompt: '[a_cycle]--[b_cycle]--[c_cycle]'
-bigcycle_concur:
+  # a&b -> b&c -> c&a
+  image_prompt: '[a_cycle]&&[b_cycle]__[c_cycle]__[a_cycle]'
+bigcycle_prompt:
   # Explicitly un-set the value from the last run
   # If you don't do this, the last known value will be used
   # There ALWAYS has to be a prompt, so don't unset it. That's the only required setting.
   image_prompt: False
+  # more complex because the prompts for a b and c are themselves chains, they're just dropped in:
+  # [lib]--[neon]--[space]&&[space]--[lib]--[neon]__[neon]--[space]--[lib]__[lib]--[neon]--[space]
+  # l -> n -> s&s -> s&l -> s&n -> n&n -> n&s -> n&l -> l&l -> l&n -> l&s
+  prompt: '[a_cycle]&&[b_cycle]__[c_cycle]__[a_cycle]'
