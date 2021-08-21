@@ -47,7 +47,7 @@ def get_next_path(name, gallery, run):
 # function to write a video to a file
 # use the str hash function
 # with the list of filenames (dir not included) as hash
-def write_video(out_dir, name, outputs, tqdm=tqdm):
+def write_video(out_dir, name, outputs, fps, tqdm=tqdm):
     tmp_dir = f'{out_dir}/tmp-{name}'
     if os.path.exists(tmp_dir):
         shutil.rmtree(tmp_dir)
@@ -59,7 +59,7 @@ def write_video(out_dir, name, outputs, tqdm=tqdm):
         i += 1
     video_file = f'{out_dir}/{name}.mp4'
     vid_path = output_file_postfix(video_file, obj_hash(outputs))
-    argv = ['-r', '24', '-f', 'image2', '-i', f'{tmp_dir}/%05d.jpg', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-y', vid_path]
+    argv = ['-r', fps, '-f', 'image2', '-i', f'{tmp_dir}/%05d.jpg', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-y', vid_path]
     ffpb.main(argv, tqdm=tqdm)
     shutil.rmtree(tmp_dir)
     return vid_path

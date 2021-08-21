@@ -11,7 +11,7 @@ def get_default_args():
         'images_per_prompt': 20,
         'noise_prompt_seeds': [],
         'noise_prompt_weights': [],
-        'size': [1000, 500],
+        'size': [730, 730],
         'init_image': None, # this can be None
         'init_weight': 0.,
         'clip_model': 'ViT-B/32',
@@ -21,7 +21,8 @@ def get_default_args():
         'cutn': 64,
         'cut_pow': 1.,
         'seed': 0,
-        'video': False
+        'video': False,
+        'fps': 24
     }
 
 # You can reference other prompts and image outputs with '[ref]':
@@ -100,7 +101,8 @@ def parse_yaml(yaml):
             'cutn': run.get('cutn'),
             'cut_pow': run.get('cut_pow'),
             'seed': run.get('seed'),
-            'video': run.get('video')
+            'video': run.get('video'),
+            'fps': run.get('fps')
         }
         # only set the ones that actually were set
         # this is how the carry over feature is implemented
