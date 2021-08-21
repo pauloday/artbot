@@ -9,9 +9,10 @@ from torch import nn, optim
 from torch.nn import functional as F
 from torchvision import transforms
 from torchvision.transforms import functional as TF
+from output import image_name
 
 from CLIP import clip
-from tqdm import tqdm as default_tqdm
+from tqdm import tqdm
 
 
 def sinc(x):
@@ -174,24 +175,7 @@ def resize_image(image, out_size):
     size = round((area * ratio)**0.5), round((area / ratio)**0.5)
     return image.resize(size, Image.LANCZOS)
 
-# parses a schedule into a single prompt
-# schedule example:
-# [('tree', 1), ('river', 1)]
-# tree 50% of the time, river 50%
-# so if we're below 5/10 return tree, 5/10 or above return river
-# i_pct is % of way through iterations
-def get_current_prompt(schedule, i_pct):
-    sched_pct = 0
-    ratio_sum = 0
-    for prompt in schedule:
-        ratio_sum += prompt[1]
-    for prompt in schedule:
-        sched_pct += prompt[1]/ratio_sum
-        if i_pct < sched_pct:
-            return prompt[0]
-    return schedule[-1][0]
-
-def run_args(args, image_name_fn, dev=0, image_writer=False, tqdm=default_tqdm):
+def run_args(args, output_dir, dev=0, image_writer=False, status_writer=False, tqdm=tqdm):
     device_name = f'cuda:{dev}'
     device = torch.device(device_name)
     print('Using device:', device, args['vqgan_checkpoint'])
@@ -229,82 +213,105 @@ def run_args(args, image_name_fn, dev=0, image_writer=False, tqdm=default_tqdm):
 
     pMs = []
 
-    # in a function so it can run every iteration for switching prompts
-    # TODO: actually do the math for the next switch and only run this when needed
-    # that should allow image prompt switching as well
-    def set_prompts(i):
-        for p in args['prompts']:
-            p_str = p[0] if type(p) == tuple else p
-            prompt = get_current_prompt(p, i/args['iterations']) if type(p) == list else p_str
-            txt, weight, stop = parse_prompt(prompt)
-            embed = perceptor.encode_text(clip.tokenize(txt).to(device)).float()
-            pMs.append(Prompt(embed, weight, stop).to(device))
+    # if input is a table and i is in the table, or input is prompt, return prompt
+    # else return false
+    def get_index_prompt(prompt, i):
+        if type(prompt) == dict:
+            if i in prompt.keys():
+                return prompt[i]
+            else:
+                return False
+        return prompt
+
+    current_prompts = []
+    # check to see if there's any prompts to update
+    def update_prompts(i):
+        prompts = args['prompt'].get(i)
+        image_prompts = args['image_prompt'] and args['image_prompt'].get(i)
+        if prompts or image_prompts:
+            pMs.clear()
+            set_prompts(prompts, image_prompts)
+            current_prompts.append(f'**Prompts:** {prompts}<br>**Image Prompts:** {image_prompts}')
+
+    def set_prompts(prompts, image_prompts):
+        if prompts:
+            for p in prompts:
+                prompt = get_index_prompt(p, i)
+                txt, weight, stop = parse_prompt(prompt)
+                embed = perceptor.encode_text(clip.tokenize(txt).to(device)).float()
+                pMs.append(Prompt(embed, weight, stop).to(device))
+        
+        if image_prompts:
+            for p in image_prompts:
+                prompt = get_index_prompt(p, i)
+                path, weight, stop = parse_prompt(prompt)
+                img = resize_image(Image.open(fetch(path)).convert('RGB'), (sideX, sideY))
+                batch = make_cutouts(TF.to_tensor(img).unsqueeze(0).to(device))
+                embed = perceptor.encode_image(normalize(batch)).float()
+                pMs.append(Prompt(embed, weight, stop).to(device))
 
         for seed, weight in zip(args['noise_prompt_seeds'], args['noise_prompt_weights']):
             gen = torch.Generator().manual_seed(seed)
             embed = torch.empty([1, perceptor.visual.output_dim]).normal_(generator=gen)
             pMs.append(Prompt(embed, weight).to(device))
-    set_prompts(0)
-
-    # running this every iteration is too expensive, goes oom very easy
-    if args['image_prompts']:
-        for prompt in args['image_prompts']:
-            path, weight, stop = parse_prompt(prompt)
-            img = resize_image(Image.open(fetch(path)).convert('RGB'), (sideX, sideY))
-            batch = make_cutouts(TF.to_tensor(img).unsqueeze(0).to(device))
-            embed = perceptor.encode_image(normalize(batch)).float()
-            pMs.append(Prompt(embed, weight, stop).to(device))
 
     def synth(z):
         z_q = vector_quantize(z.movedim(1, 3), model.quantize.embedding.weight).movedim(3, 1)
         return clamp_with_grad(model.decode(z_q).add(1).div(2), 0, 1)
 
     @torch.no_grad()
-    def checkin(i, losses, out_path):
+    def checkin(losses, out_path):
         losses_str = ', '.join(f'{loss.item():g}' for loss in losses)
         # this is some math thing I don't want to get rid of, but it takes a lot of space for bigger runs
         #print(f'i: {i}, loss: {sum(losses).item():g}, losses: {losses_str}')
         out = synth(z)
         TF.to_pil_image(out[0].cpu()).save(out_path)
-        image_writer(out_path)
-        print(f'Wrote {out_path}')
+        return f'{current_prompts[-1]}<br>**Output:** {out_path}'
 
     def ascend_txt():
         out = synth(z)
         iii = perceptor.encode_image(normalize(make_cutouts(out))).float()
-
         result = []
-
         if args['init_weight']:
             result.append(F.mse_loss(z, z_orig) * args['init_weight'] / 2)
-
         for prompt in pMs:
             result.append(prompt(iii))
-
         return result
 
     def train(i):
+        status = False
         opt.zero_grad()
         lossAll = ascend_txt()
         display_freq = math.floor(args['iterations']/args['images_per_prompt'])
-        out_path = image_name_fn(i)
-        if (i % display_freq == 0 and i != 0):
-            checkin(i, lossAll, out_path)
+        out_path = False
+        if (i % display_freq == 0 and i != 0) or i == args['iterations']:
+            out_path  = image_name(output_dir, i, args)
+            status = checkin(lossAll, out_path)
         loss = sum(lossAll)
         loss.backward()
         opt.step()
         with torch.no_grad():
             z.copy_(z.maximum(z_min).minimum(z_max))
-        return out_path
+        if out_path:
+            return out_path, status
+        return False, status
 
     i = 0
     out_paths = []
     try:
         with tqdm(total=args['iterations']) as pbar:
-            while i <= args['iterations']:
+            while i < args['iterations']:
+                update_prompts(i)
+                path, status = train(i + 1) # have i start at 1 without making pbar bigger
+                if path:
+                    out_paths.append(path)
+                    if image_writer:
+                        image_writer(path, dev)
                 pbar.update()
-                out_paths.append(train(i))
-                set_prompts(i)
+                if status and status_writer:
+                    #TODO restructure status so omitting image prompt is ez
+                    status = f'{status}<br>**All prompts:** {args["prompt"]}<br>**All image prompts:** {args["image_prompt"]}'
+                    status_writer(status, dev)
                 i += 1
     except KeyboardInterrupt:
         pass
