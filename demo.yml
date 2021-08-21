@@ -3,6 +3,9 @@
 # Only the prompt is required for a run. When a value is left out the last known one is used
 # You can stop the last value from being used by passing False for it
 
+# When a run is finished, it's stored in a way where it won't be re-done unless the settings change
+# So you can keep adding to and re-running a file and only run the new runs each time
+
 # Prompt structure is parts seperated by modifiers, starting and ending with a part:
 #   part->mod->part->mod->part
 # Parts are one or more concurrent prompts with an optional duration
@@ -15,17 +18,17 @@
 # {n}: Run this part n times longer than the others, can be placed anywhere in the part
 # a&&b: Run a and b at the same time, they are treated as a pair for {} but not -- and __
 #   They're just pushed onto the prompt list one at a time like normal
-# Example: 'a++b{2}--c__d||e&&f'
+# Example: 'a++b--c__d||e&&f{2}'
 #   Run a -> add b -> remove b, add c -> remove a, add d -> remove everything, add e and f
-#   b will be run twice as long as the others, i.e. 1:2:1:1 ratio
+#   e and f will be run twice as long as the others, i.e. 1:1:1:2 ratio
 # If you use only alphabetical characters for a prompt, it doesn't have to be quoted
 # But if you use any numbers or special characters, wrap the prompt in quotes.
 
-title: Scratch # Title is required, will be used as output folder name
+title: Neon Library Demo # Title is required, will be used as output folder name
 neon:
   # Images to make per run. These will be displayed as they're made to give a view of the progress
-  images: 10 # default 30
-  iterations: 100 #default 200
+  images: 10  # WARNING: If images is higher than iterations, you'll get a division by 0 error
+  iterations: 100
   prompt: dynamic billowing neon
 # If you only want to define a prompt and no other options, you can do so in one line:
 # these runs will use the images and iterations values from above
@@ -52,3 +55,21 @@ bigcycle_prompt:
   # [lib]--[neon]--[space]&&[space]--[lib]--[neon]__[neon]--[space]--[lib]__[lib]--[neon]--[space]
   # l -> n -> s&s -> s&l -> s&n -> n&n -> n&s -> n&l -> l&l -> l&n -> l&s
   prompt: '[a_cycle]&&[b_cycle]__[c_cycle]__[a_cycle]'
+chess_neon:
+  # by default it starts drawing on random noise
+  # you can also pass in an initial image for it to start drawing on
+  # the image will be stretched to size, for init image and image prompt
+  # both image prompts and init images can take a URL
+  # but URLs can contain some of the special characters I use and that will break parsing, so be careful
+  # I'd recommend uploading your image to imgur just to be safe
+  images: 20
+  init_image: 'https://i.imgur.com/3Qk0orG.png'
+  iterations: 200
+  prompt: '[neon]'
+chess_lib:
+  prompt: '[lib]'
+seed_chess_lib:
+  # Artbot uses random numbers, but always the same string of random numbers for a given seed
+  # if you want a different version of the same run, change the seed
+  # defaults to 0
+  seed: 1337

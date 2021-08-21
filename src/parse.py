@@ -8,7 +8,7 @@ def get_default_args():
         'prompt': [],
         'image_prompt': None,
         'iterations': 200,
-        'images_per_prompt': 30,
+        'images_per_prompt': 20,
         'noise_prompt_seeds': [],
         'noise_prompt_weights': [],
         'size': [1000, 500],
@@ -21,7 +21,7 @@ def get_default_args():
         'cutn': 64,
         'cut_pow': 1.,
         'seed': 0,
-        'video': True
+        'video': False
     }
 
 # You can reference other prompts and image outputs with '[ref]':
