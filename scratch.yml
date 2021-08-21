@@ -1,0 +1,49 @@
+# A document can have any number of runs
+# Runs don't have to be in order in the document, but if they are it'll go slightly faster
+# Only the prompt is required for a run. When a value is left out the last known one is used
+# You can stop the last value from being used by passing False for it
+
+# Prompt structure is parts seperated by modifiers, starting and ending with a part:
+#   part->mod->part->mod->part
+# Parts are one or more concurrent prompts with an optional duration
+# These will be added and removed over the course of the run
+# Modifiers adjust the current prompt list somehow before adding the next one:
+# --: Remove the newest prompt
+# __: Remove the oldest prompt
+# ++: Add the next prompt (technically does nothing as the next prompt is always added)
+# ||: Clear all prompts
+# {n}: Run this part n times longer than the others, can be placed anywhere in the part
+# a&&b: Run a and b at the same time, they are treated as a pair for {} but not -- and __
+#   They're just pushed onto the prompt list one at a time like normal
+# Example: 'a++b{2}--c__d||e&&f'
+#   Run a -> add b -> remove b, add c -> remove a, add d -> remove everything, add e and f
+#   b will be run twice as long as the others, i.e. 1:2:1:1 ratio
+# If you use only alphabetical characters for a prompt, it doesn't have to be quoted
+# But if you use any numbers or special characters, wrap the prompt in quotes.
+
+title: Scratch # Title is required, will be used as output folder name
+neon:
+  # Images to make per run. These will be displayed as they're made to give a view of the progress
+  images: 10 # default 30
+  iterations: 100 #default 200
+  prompt: dynamic billowing neon
+# If you only want to define a prompt and no other options, you can do so in one line:
+# these runs will use the images and iterations values from above
+space: outer space sky ocean galaxy
+lib: in a sacred library by James Gurney
+# You can reference other prompts and image outputs with '[ref]'
+# for example, '[lib]' will be replaced with 'in a sacred library by James Gurney'
+a_cycle: '[lib]--[neon]--[space]'
+b_cycle: '[space]--[lib]--[neon]'
+c_cycle: '[neon]--[space]--[lib]'
+concur: '[neon]&&[space]&&[lib]'
+bigcycle_image_prompt:
+  iterations: 600
+  images: 400
+  video: True # use the images as frames for video. Video will be in the main folder, not the run folder
+  image_prompt: '[a_cycle]--[b_cycle]--[c_cycle]'
+bigcycle_concur:
+  # Explicitly un-set the value from the last run
+  # If you don't do this, the last known value will be used
+  # There ALWAYS has to be a prompt, so don't unset it. That's the only required setting.
+  image_prompt: False
