@@ -96,7 +96,7 @@ class Artbot():
         outputs = run_args(run, output, dev=dev, image_writer=self.image_writer, status_writer=self.status_writer, tqdm=self.tqdm)
         self.index.toggle(dev, True)
         if 'video' in run.keys() and run['video']:
-            write_video(self.gallery, name, outputs, tqdm=self.tqdm)
+            write_video(self.gallery, name, outputs, self.run['fps'], tqdm=self.tqdm)
         return outputs[-1]
 
 if __name__ == "__main__":

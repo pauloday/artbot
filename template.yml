@@ -1,0 +1,38 @@
+# A document can have any number of runs
+# Runs don't have to be in order in the document, but if they are it'll go slightly faster
+# Only the prompt is required for a run. When a value is left out the last known one is used
+# You can stop the last value from being used by passing False for it
+
+# When a run is finished, it's stored in a way where it won't be re-done unless the settings change
+# So you can keep adding to and re-running a file and only run the new runs each time
+
+# Prompt structure is parts seperated by modifiers, starting and ending with a part:
+#   part->mod->part->mod->part
+# Parts are one or more concurrent prompts with an optional duration
+# These will be added and removed over the course of the run
+# Modifiers adjust the current prompt list somehow before adding the next one:
+# --: Remove the newest prompt
+# __: Remove the oldest prompt
+# ++: Add the next prompt (technically does nothing as the next prompt is always added)
+# ||: Clear all prompts
+# {n}: Run this part n times longer than the others, can be placed anywhere in the part
+# a&&b: Run a and b at the same time, they are treated as a pair for {} but not -- and __
+#   They're just pushed onto the prompt list one at a time like normal
+# Example: 'a++b--c__d||e&&f{2}'
+#   Run a -> add b -> remove b, add c -> remove a, add d -> remove everything, add e and f
+#   e and f will be run twice as long as the others, i.e. 1:1:1:2 ratio
+# If you use only alphabetical characters for a prompt, it doesn't have to be quoted
+# But if you use any numbers or special characters, wrap the prompt in quotes.
+
+# Allowed values and defaults:
+# image_prompt: False - if you have too many/too big images, you'll go out of memory
+# iterations: 200 - plateaus after much longer but prompt chains might need more iterations
+# images: 20 - to give a sense of progress, since videos are disabled by default
+# size: [730, 730] - if size is too big you'll go oom, this is tuned for Colab
+# init_image: False - Image to start drawing on, defaults to random noise
+# step_size: 0.05 - How much the image changes with each iteration
+# seed: 0 - Random number seed, change to get different versions of the same run
+# video: False - Use images as frames for a video
+# fps: 24  - frames per second of video, does nothing if video is False
+
+title:
