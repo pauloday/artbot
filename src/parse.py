@@ -21,7 +21,7 @@ def get_default_args():
         'cutn': 64,
         'cut_pow': 1.,
         'seed': 0,
-        'video': True
+        'video': False
     }
 
 # You can reference other prompts and image outputs with '[ref]':

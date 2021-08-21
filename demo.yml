@@ -21,7 +21,7 @@
 # If you use only alphabetical characters for a prompt, it doesn't have to be quoted
 # But if you use any numbers or special characters, wrap the prompt in quotes.
 
-title: Scratch # Title is required, will be used as output folder name
+title: Neon Library Demo # Title is required, will be used as output folder name
 neon:
   # Images to make per run. These will be displayed as they're made to give a view of the progress
   images: 10 # default 30
