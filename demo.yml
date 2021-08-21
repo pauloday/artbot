@@ -24,6 +24,17 @@
 # If you use only alphabetical characters for a prompt, it doesn't have to be quoted
 # But if you use any numbers or special characters, wrap the prompt in quotes.
 
+# Allowed values and defaults:
+# image_prompt: False - if you have too many/too big images, you'll go out of memory
+# iterations: 200 - plateaus after much longer but prompt chains might need more iterations
+# images: 20 - to give a sense of progress, since videos are disabled by default
+# size: [730, 730] - if size is too big you'll go oom, this is tuned for Colab
+# init_image: False - Image to start drawing on, defaults to random noise
+# step_size: 0.05 - How much the image changes with each iteration
+# seed: 0 - Random number seed, change to get different versions of the same run
+# video: False - Use images as frames for a video
+# fps: 24  - frames per second of video, does nothing if video is False
+
 title: Neon Library Demo # Title is required, will be used as output folder name
 neon:
   # Images to make per run. These will be displayed as they're made to give a view of the progress
@@ -72,5 +83,4 @@ chess_lib:
 seed_chess_lib:
   # Artbot uses random numbers, but always the same string of random numbers for a given seed
   # if you want a different version of the same run, change the seed
-  # defaults to 0
   seed: 1337
