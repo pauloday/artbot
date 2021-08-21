@@ -59,7 +59,7 @@ def write_video(out_dir, name, outputs, fps, tqdm=tqdm):
         i += 1
     video_file = f'{out_dir}/{name}.mp4'
     vid_path = output_file_postfix(video_file, obj_hash(outputs))
-    argv = ['-r', fps, '-f', 'image2', '-i', f'{tmp_dir}/%05d.jpg', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-y', vid_path]
+    argv = ['-r', str(fps), '-f', 'image2', '-i', f'{tmp_dir}/%05d.jpg', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-y', vid_path]
     ffpb.main(argv, tqdm=tqdm)
     shutil.rmtree(tmp_dir)
     return vid_path
