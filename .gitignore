@@ -1,12 +1,34 @@
-node_modules/
-.ipynb_checkpoints/*
-CLIP/
-Gaillery/*
-__pycache__/
-__pycache__/
-taming-transformers/
-taming/
-vqgan_imagenet_f16_1024.ckpt
-vqgan_imagenet_f16_1024.yaml
-vqgan_imagenet_f16_16384.ckpt
-vqgan_imagenet_f16_16384.yaml
+# The directory Mix will write compiled artifacts to.
+/_build/
+
+# If you run "mix test --cover", coverage assets end up here.
+/cover/
+
+# The directory Mix downloads your dependencies sources to.
+/deps/
+
+# Where 3rd-party dependencies like ExDoc output generated docs.
+/doc/
+
+# Ignore .fetch files in case you like to edit your project deps locally.
+/.fetch
+
+# If the VM crashes, it generates a dump, let's ignore it too.
+erl_crash.dump
+
+# Also ignore archive artifacts (built via "mix archive.build").
+*.ez
+
+# Ignore package tarball (built via "mix hex.build").
+artshop-*.tar
+
+# Ignore assets that are produced by build tools.
+/priv/static/assets/
+
+# Ignore digested assets cache.
+/priv/static/cache_manifest.json
+
+# In case you use Node.js/npm, you want to ignore these.
+npm-debug.log
+/assets/node_modules/
+
