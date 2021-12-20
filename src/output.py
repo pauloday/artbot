@@ -17,11 +17,20 @@ def obj_hash(obj):
 
 def image_name(out_dir, i, settings):
     image_name = f'{out_dir}/{i}_{settings["size"][0]}x{settings["size"][1]}.jpg'
-    dump_args = run.copy();
+    dump_args = settings.copy();
     # these args shouldn't ever change individual images when modified
-    del dump_args['iterations']
     del dump_args['video']
     return output_file_postfix(image_name, obj_hash(dump_args))
+
+# output a file path with a hash of something included, and create any parent dirs
+def output_file_postfix(path, postfix):
+    path = Path(path)
+    parent = path.parent.absolute()
+    if not os.path.exists(parent):
+            os.makedirs(parent)
+    fil, ext = os.path.splitext(path)
+    outpath = f'{fil}-{postfix}{ext}'
+    return outpath
 
 # function to write a video to a file
 # use the str hash function

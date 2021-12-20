@@ -1,12 +1,11 @@
 from re import sub, escape
 from yaml import load, FullLoader
 from math import floor
-from parse_prompt import parse_prompt
 
 # get the settings from the run yaml
 def get_settings(run):
     return {
-        'title': run.get('title') or 'Untitled'
+        'title': run.get('title') or 'Untitled',
         'images': run.get('images') or 20,
         'time_scale': run.get('time_scale') or 1,
         'noise_prompt_seeds': run.get('noise_prompt_seeds') or [],
@@ -28,7 +27,7 @@ def get_settings(run):
 # takes a 'n**prompt' and converts it to [prompt, prompt...]
 # if there's no multiplier, just return [prompt]
 mult_tok = '**'
-def expand_iteration(line)
+def expand_iteration(line):
     if mult_tok in line:
         parts = line.split(mult_tok)
         n = parts[0]
@@ -37,8 +36,8 @@ def expand_iteration(line)
     return [line]
 
 # lmao
-def flatten_array(array)
-    return [item for item_set in array for item in array]
+def flatten_array(t):
+    return [item for sublist in t for item in sublist]
 
 # the yaml has any of the settings from above, and a prompts section
 # the prompts section is an array of prompts, one per iteration
@@ -49,6 +48,6 @@ def flatten_array(array)
 def parse_yaml(yaml):
     parsed = load(yaml, Loader=FullLoader)
     settings = get_settings(parsed['settings'])
-    prompts = flatten_array(map(expand_iteration, parsed[prompts]))
-    image_prompts = flatten_array(map(expand_iteration, parsed[image_prompts]))
+    prompts = map(expand_iteration, parsed['prompts'])
+    image_prompts = [] #flatten_array(map(expand_iteration, parsed['image_prompts']))
     return (settings, prompts, image_prompts)

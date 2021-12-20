@@ -177,7 +177,7 @@ def resize_image(image, out_size):
 
 # takes an array of prompt strings, output dir
 # optionally takes a GPU #, image preview callback, status callback, progress meter
-def run_prompts(args, prompts, image_prompts, output_dir, dev=0, image_writer=False, tqdm=tqdm):
+def run_prompts(args, prompts, image_prompts, output_dir, dev=0, image_writer=False, status_writer=False, tqdm=tqdm):
     device_name = f'cuda:{dev}'
     device = torch.device(device_name)
     print('Using device:', device, args['vqgan_checkpoint'])
@@ -266,7 +266,7 @@ def run_prompts(args, prompts, image_prompts, output_dir, dev=0, image_writer=Fa
         lossAll = ascend_txt()
         display_freq = math.floor(len(prompts)/args['images'])
         out_path = False
-        if (i % display_freq == 0 and i != 0) or i == args['iterations']:
+        if (i % display_freq == 0 and i != 0) or i == len(prompts):
             out_path  = image_name(output_dir, i, args)
             checkin(lossAll, out_path)
         loss = sum(lossAll)
