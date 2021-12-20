@@ -259,16 +259,15 @@ def run_prompts(args, prompts, image_prompts, output_dir, dev=0, image_writer=Fa
         for prompt in pMs:
             result.append(prompt(iii))
         return result
-
+    iterations = len(prompts) * args['time_scale']
     def train(i):
-        set_prompts(i)
         opt.zero_grad()
         lossAll = ascend_txt()
-        display_freq = math.floor(len(prompts)/args['images'])
+        display_freq = math.floor(iterations/args['images'])
         out_path = False
-        if (i % display_freq == 0 and i != 0) or i == len(prompts):
+        if (i % display_freq == 0 and i != 0) or i == iterations:
             out_path  = image_name(output_dir, i, args)
-            checkin(lossAll, out_path)
+            checkin(i, lossAll, out_path)
         loss = sum(lossAll)
         loss.backward()
         opt.step()
@@ -279,9 +278,11 @@ def run_prompts(args, prompts, image_prompts, output_dir, dev=0, image_writer=Fa
     out_paths = []
     i = 0
     try:
-        with tqdm(i) as pbar:
-            for prompt in prompts:
-                path = train(i + 1) # have i start at 1 without making pbar bigger
+        with tqdm(total=iterations) as pbar:
+            while i < iterations:
+                if (i % args['time_scale'] == 0):
+                    set_prompts(int(i / args['time_scale']))
+                path = train(i) # have i start at 1 without making pbar bigger
                 if path:
                     out_paths.append(path)
                     if image_writer:

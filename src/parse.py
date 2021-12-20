@@ -30,7 +30,7 @@ mult_tok = '**'
 def expand_iteration(line):
     if mult_tok in line:
         parts = line.split(mult_tok)
-        n = parts[0]
+        n = int(parts[0])
         prompt = parts[1]
         return [prompt] * n
     return [line]
@@ -48,6 +48,6 @@ def flatten_array(t):
 def parse_yaml(yaml):
     parsed = load(yaml, Loader=FullLoader)
     settings = get_settings(parsed['settings'])
-    prompts = map(expand_iteration, parsed['prompts'])
+    prompts = flatten_array(map(expand_iteration, parsed['prompts']))
     image_prompts = [] #flatten_array(map(expand_iteration, parsed['image_prompts']))
     return (settings, prompts, image_prompts)

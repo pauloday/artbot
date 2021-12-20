@@ -16,7 +16,7 @@ def obj_hash(obj):
     return str_hash(encoded)
 
 def image_name(out_dir, i, settings):
-    image_name = f'{out_dir}/{i}_{settings["size"][0]}x{settings["size"][1]}.jpg'
+    image_name = f'{out_dir}/{settings["title"]}/{i}_{settings["size"][0]}x{settings["size"][1]}.jpg'
     dump_args = settings.copy();
     # these args shouldn't ever change individual images when modified
     del dump_args['video']
